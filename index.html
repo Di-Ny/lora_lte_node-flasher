@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LoRa-LTE Node — Flasher en ligne</title>
+  <script
+    type="module"
+    src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"
+  ></script>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card: #181c24;
+      --text: #e8eaed;
+      --muted: #9aa0a6;
+      --accent: #4f9eff;
+      --warn: #ffb347;
+      --danger: #ff5c5c;
+      --ok: #4ade80;
+      --border: #262b36;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+    header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    h1 { margin: 0 0 0.25rem; font-size: 1.7rem; }
+    .subtitle { color: var(--muted); margin: 0; font-size: 0.95rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .card h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .card p { margin: 0.5rem 0; color: var(--muted); font-size: 0.95rem; }
+    .card.update { border-left: 3px solid var(--accent); }
+    .card.factory { border-left: 3px solid var(--danger); }
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge.safe { background: rgba(74, 222, 128, 0.15); color: var(--ok); }
+    .badge.danger { background: rgba(255, 92, 92, 0.15); color: var(--danger); }
+    esp-web-install-button { display: inline-block; margin-top: 0.5rem; }
+    esp-web-install-button::part(button) {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    esp-web-install-button[manifest*="factory"]::part(button) { background: var(--danger); }
+    .browser-warn {
+      background: rgba(255, 179, 71, 0.1);
+      border: 1px solid rgba(255, 179, 71, 0.3);
+      color: var(--warn);
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+    .browser-warn.show { display: block; }
+    footer {
+      margin-top: 3rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+    footer a { color: var(--accent); }
+    code {
+      background: rgba(255, 255, 255, 0.07);
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-size: 0.88em;
+    }
+    .version-pill {
+      display: inline-block;
+      background: rgba(79, 158, 255, 0.15);
+      color: var(--accent);
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>LoRa-LTE Node <span class="version-pill" id="version-pill">v3.8.0</span></h1>
+      <p class="subtitle">
+        Outil de flashage en ligne pour les nodes LoRa/LTE — branchez le device en USB
+        et cliquez sur le mode souhaité.
+      </p>
+    </header>
+
+    <div class="browser-warn" id="browser-warn">
+      ⚠️ Votre navigateur ne supporte pas l'API Web Serial.
+      Utilisez <strong>Google Chrome</strong>, <strong>Microsoft Edge</strong> ou
+      <strong>Opera</strong> (version desktop, pas mobile).
+    </div>
+
+    <div class="card update">
+      <h2>Mise à jour firmware <span class="badge safe">données conservées</span></h2>
+      <p>
+        Remplace uniquement le code applicatif. La <strong>NVS</strong> (clés LoRaWAN,
+        paramètres, ICCID, buffers de records) est <strong>préservée</strong>. Choisir
+        ce mode pour les mises à jour de routine.
+      </p>
+      <esp-web-install-button manifest="manifest-update.json">
+        <button slot="activate">Flasher la mise à jour</button>
+        <span slot="unsupported">Navigateur non supporté</span>
+        <span slot="not-allowed">Connexion USB requise (HTTPS)</span>
+      </esp-web-install-button>
+    </div>
+
+    <div class="card factory">
+      <h2>Flash usine complet <span class="badge danger">efface tout</span></h2>
+      <p>
+        Réinscrit <strong>bootloader + table de partitions + application</strong> et
+        <strong>efface entièrement la flash</strong> (NVS incluse). À utiliser pour un
+        device neuf, un sinistre logiciel, ou un changement de table de partitions.
+      </p>
+      <p style="color: var(--danger); font-weight: 500;">
+        ⚠️ Les clés LoRaWAN du device seront perdues — un ré-appairage sur le serveur
+        ChirpStack sera nécessaire.
+      </p>
+      <esp-web-install-button manifest="manifest-factory.json">
+        <button slot="activate">Flash usine (destructif)</button>
+        <span slot="unsupported">Navigateur non supporté</span>
+        <span slot="not-allowed">Connexion USB requise (HTTPS)</span>
+      </esp-web-install-button>
+    </div>
+
+    <div class="card">
+      <h2>Avant de commencer</h2>
+      <p>
+        <strong>1.</strong> Branchez le node sur un port USB-C.<br />
+        <strong>2.</strong> Sur Windows, installez le driver
+        <a href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers" target="_blank" rel="noopener">CP210x</a>
+        si le périphérique n'apparaît pas (généralement détecté automatiquement).<br />
+        <strong>3.</strong> Maintenez le bouton <code>BOOT</code> du Heltec, appuyez sur
+        <code>RESET</code>, puis relâchez <code>BOOT</code> pour entrer en mode flash
+        (uniquement si le flash automatique échoue).<br />
+        <strong>4.</strong> Cliquez sur le bouton du mode souhaité ci-dessus et
+        sélectionnez le port COM du device.
+      </p>
+    </div>
+
+    <footer>
+      Code source du flasher :
+      <a href="https://github.com/Di-Ny/lora_lte_node-flasher" target="_blank" rel="noopener">github.com/Di-Ny/lora_lte_node-flasher</a><br />
+      Propulsé par <a href="https://esphome.github.io/esp-web-tools/" target="_blank" rel="noopener">ESP Web Tools</a>
+      — © 2026 Nicolas Dauy — Licence MIT
+    </footer>
+  </main>
+
+  <script>
+    if (!("serial" in navigator)) {
+      document.getElementById("browser-warn").classList.add("show");
+    }
+  </script>
+</body>
+</html>
