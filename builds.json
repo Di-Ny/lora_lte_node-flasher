@@ -12,18 +12,18 @@
   "versions": [
     {
       "id": "3.8.0",
-      "date": "2026-05-13",
-      "notes": "Premiere release flasher web. NVS persistance ICCID, RTC RV3028C7, refactor SD, DENDRO, stabilite.",
+      "date": "2026-05-14",
+      "notes": "Release v3.8.0 — 9 builds (3 trames × 3 radios). NVS persistance ICCID, RTC RV3028C7, refactor SD, DENDRO, stabilité.",
       "builds": {
-        "v1ntc-gsm":  { "available": true,  "manifestUpdate": "manifests/v3.8.0-v1ntc-gsm-update.json",  "manifestFactory": "manifests/v3.8.0-v1ntc-gsm-factory.json" },
-        "v1ntc-lora": { "available": false },
-        "v1ntc-lora-gsm": { "available": false },
-        "v1-gsm": { "available": false },
-        "v1-lora": { "available": false },
-        "v1-lora-gsm": { "available": false },
-        "dendro-gsm": { "available": false },
-        "dendro-lora": { "available": false },
-        "dendro-lora-gsm": { "available": false }
+        "v1-gsm":         { "available": true, "manifestUpdate": "manifests/v3.8.0-v1-gsm-update.json",         "manifestFactory": "manifests/v3.8.0-v1-gsm-factory.json" },
+        "v1-lora":        { "available": true, "manifestUpdate": "manifests/v3.8.0-v1-lora-update.json",        "manifestFactory": "manifests/v3.8.0-v1-lora-factory.json" },
+        "v1-lora-gsm":    { "available": true, "manifestUpdate": "manifests/v3.8.0-v1-lora-gsm-update.json",    "manifestFactory": "manifests/v3.8.0-v1-lora-gsm-factory.json" },
+        "v1ntc-gsm":      { "available": true, "manifestUpdate": "manifests/v3.8.0-v1ntc-gsm-update.json",      "manifestFactory": "manifests/v3.8.0-v1ntc-gsm-factory.json" },
+        "v1ntc-lora":     { "available": true, "manifestUpdate": "manifests/v3.8.0-v1ntc-lora-update.json",     "manifestFactory": "manifests/v3.8.0-v1ntc-lora-factory.json" },
+        "v1ntc-lora-gsm": { "available": true, "manifestUpdate": "manifests/v3.8.0-v1ntc-lora-gsm-update.json", "manifestFactory": "manifests/v3.8.0-v1ntc-lora-gsm-factory.json" },
+        "dendro-gsm":     { "available": true, "manifestUpdate": "manifests/v3.8.0-dendro-gsm-update.json",     "manifestFactory": "manifests/v3.8.0-dendro-gsm-factory.json" },
+        "dendro-lora":    { "available": true, "manifestUpdate": "manifests/v3.8.0-dendro-lora-update.json",    "manifestFactory": "manifests/v3.8.0-dendro-lora-factory.json" },
+        "dendro-lora-gsm":{ "available": true, "manifestUpdate": "manifests/v3.8.0-dendro-lora-gsm-update.json","manifestFactory": "manifests/v3.8.0-dendro-lora-gsm-factory.json" }
       }
     }
   ]

@@ -1,12 +1,12 @@
 {
-  "name": "LoRa-LTE Node v3.8.0 V1NTC GSM - Flash usine",
+  "name": "LoRa-LTE Node v3.8.0 DENDRO LoRa+GSM - Flash usine",
   "version": "3.8.0",
   "new_install_prompt_erase": true,
   "builds": [
     {
       "chipFamily": "ESP32-S3",
       "parts": [
-        { "path": "../firmware/v3.8.0-v1ntc-gsm-full.bin", "offset": 0 }
+        { "path": "../firmware/v3.8.0-dendro-lora-gsm-full.bin", "offset": 0 }
       ]
     }
   ]
