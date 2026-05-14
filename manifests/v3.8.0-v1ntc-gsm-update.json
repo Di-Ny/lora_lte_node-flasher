@@ -1,0 +1,13 @@
+{
+  "name": "LoRa-LTE Node v3.8.0 V1NTC GSM — Mise à jour",
+  "version": "3.8.0",
+  "new_install_prompt_erase": false,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "../firmware/v3.8.0-v1ntc-gsm-app.bin", "offset": 131072 }
+      ]
+    }
+  ]
+}
