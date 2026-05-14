@@ -1,0 +1,30 @@
+{
+  "trames": [
+    { "id": "v1",     "label": "V1 — Node basique" },
+    { "id": "v1ntc",  "label": "V1NTC — V1 + 12 NTC" },
+    { "id": "dendro", "label": "DENDRO — V1 + 4 ADS analogiques" }
+  ],
+  "radios": [
+    { "id": "gsm",      "label": "GSM seul" },
+    { "id": "lora",     "label": "LoRa seul (EU868)" },
+    { "id": "lora-gsm", "label": "LoRa + GSM (EU868)" }
+  ],
+  "versions": [
+    {
+      "id": "3.8.0",
+      "date": "2026-05-13",
+      "notes": "Premiere release flasher web. NVS persistance ICCID, RTC RV3028C7, refactor SD, DENDRO, stabilite.",
+      "builds": [
+        { "trame": "v1ntc",  "radio": "gsm",      "available": true  },
+        { "trame": "v1ntc",  "radio": "lora",     "available": false },
+        { "trame": "v1ntc",  "radio": "lora-gsm", "available": false },
+        { "trame": "v1",     "radio": "gsm",      "available": false },
+        { "trame": "v1",     "radio": "lora",     "available": false },
+        { "trame": "v1",     "radio": "lora-gsm", "available": false },
+        { "trame": "dendro", "radio": "gsm",      "available": false },
+        { "trame": "dendro", "radio": "lora",     "available": false },
+        { "trame": "dendro", "radio": "lora-gsm", "available": false }
+      ]
+    }
+  ]
+}
