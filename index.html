@@ -635,19 +635,54 @@
         try { await port.device.close(); } catch {}
       }
       updatePortUI();
+      // Lance un polling pour detecter quand ESP Web Tools libere le port.
+      // On essaie d'ouvrir toutes les 1.5s ; le 1er succes = flash termine, on reprend.
+      startReclaimPolling();
+    }
+
+    let reclaimPollingId = null;
+    function startReclaimPolling() {
+      if (reclaimPollingId) return;
+      reclaimPollingId = setInterval(async () => {
+        if (!port.flashing || !port.device) {
+          clearInterval(reclaimPollingId);
+          reclaimPollingId = null;
+          return;
+        }
+        // Tente d'ouvrir : si ca marche, ESP Web Tools a libere -> on reprend
+        try {
+          await port.device.open({ baudRate: 115200 });
+          // Succes : on a le port, on annule le polling et on reprend la lecture
+          clearInterval(reclaimPollingId);
+          reclaimPollingId = null;
+          port.flashing = false;
+          port.reading = true;
+          readLoop();
+          updatePortUI();
+        } catch (e) {
+          // Toujours occupe par ESP Web Tools, on retentera
+        }
+      }, 1500);
     }
     async function reclaimPortAfterFlash() {
+      if (reclaimPollingId) {
+        clearInterval(reclaimPollingId);
+        reclaimPollingId = null;
+      }
       port.flashing = false;
       if (port.device) {
         port.reading = true;
-        // Petite attente : ESP Web Tools peut prendre un moment a relacher le port apres le flash
         await new Promise(r => setTimeout(r, 500));
         try {
           await port.device.open({ baudRate: 115200 });
           readLoop();
         } catch (e) {
-          // Si on n'arrive pas a rouvrir, on considere le port comme deconnecte
-          port.device = null;
+          // Le port est peut-etre deja ouvert si le polling l'a deja repris
+          if (!/already open/i.test(e.message)) {
+            port.device = null;
+          } else {
+            readLoop();
+          }
         }
       }
       updatePortUI();
@@ -891,7 +926,7 @@
 
       if (build.available) {
         summary.className = "build-summary ok";
-        summary.innerHTML = `<span>✓ Configuration : <strong>${radioLabel()}</strong> · </span><span class="build-id">${id}</span>`;
+        summary.innerHTML = `<span>✓ Configuration : <strong>${radioLabel()}</strong> · </span><span class="build-id">${id}</span><span class="summary-end" style="color: var(--muted); font-weight: 400;">2 clics : « Install » puis « Se connecter »</span>`;
 
         // Update button
         const upBtn = document.createElement("button");
