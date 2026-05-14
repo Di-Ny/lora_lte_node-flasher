@@ -22,6 +22,7 @@
       --warn-text: #57430a;
       --danger: #cf222e;
       --danger-hover: #b81d29;
+      --danger-soft: rgba(207, 34, 46, 0.08);
       --ok: #1a7f37;
       --ok-bg: rgba(26, 127, 55, 0.08);
       --border: #d0d7de;
@@ -125,17 +126,32 @@
     }
     .browser-warn.show { display: block; }
 
-    /* ----------- Version banner ---------- */
-    .version-banner {
+    /* ----------- Section ---------- */
+    .section {
       background: var(--card);
       border: 1px solid var(--border-soft);
-      border-radius: 6px;
-      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
       margin-bottom: 1rem;
+    }
+    .section-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin: 0 0 0.65rem;
+    }
+
+    /* ----------- Version banner ---------- */
+    .version-banner {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.85rem;
       flex-wrap: wrap;
+    }
+    .version-banner .ver-left {
+      display: flex; align-items: center; gap: 0.6rem;
     }
     .version-pill {
       background: var(--accent-soft);
@@ -146,152 +162,182 @@
       font-size: 0.85rem;
       font-family: ui-monospace, monospace;
     }
-    .version-date { color: var(--muted); font-size: 0.85rem; }
-    .version-notes { color: var(--muted); font-size: 0.85rem; flex-basis: 100%; margin: 0; }
-
-    /* ----------- Trame cards ---------- */
-    .trame-card {
-      background: var(--card);
-      border: 1px solid var(--border-soft);
-      border-radius: 8px;
-      padding: 1rem 1.25rem;
-      margin-bottom: 0.85rem;
-      transition: border-color 0.15s ease;
+    .version-select {
+      padding: 0.3rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: white;
+      font-family: ui-monospace, monospace;
+      font-size: 0.85rem;
+      cursor: pointer;
     }
-    .trame-card.has-selection { border-color: var(--accent); }
+    .version-date { color: var(--muted); font-size: 0.85rem; }
+    .version-notes {
+      color: var(--muted);
+      font-size: 0.85rem;
+      flex-basis: 100%;
+      margin: 0;
+    }
 
-    .trame-head {
+    /* ----------- Mode cards ---------- */
+    .mode-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.65rem;
+    }
+    .mode-card {
+      background: white;
+      border: 2px solid var(--border-soft);
+      border-radius: 7px;
+      padding: 0.7rem 0.9rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+    .mode-card:hover { border-color: var(--border); }
+    .mode-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .mode-card.selected::after {
+      content: "✓";
+      position: absolute;
+      top: 0.5rem; right: 0.6rem;
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .mode-card .mode-name {
+      font-weight: 600;
+      font-size: 1rem;
+      margin: 0 0 0.15rem;
+    }
+    .mode-card.selected .mode-name { color: var(--accent); }
+    .mode-card .mode-desc {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin: 0;
+    }
+
+    /* ----------- iOS toggles ---------- */
+    .options-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+    }
+    @media (max-width: 520px) { .options-list { grid-template-columns: 1fr; } }
+    .option-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .trame-title {
-      display: flex; align-items: baseline; gap: 0.55rem;
-      flex: 1;
-    }
-    .trame-title h2 {
-      margin: 0;
-      font-size: 1.05rem;
-      font-weight: 600;
-      letter-spacing: 0.01em;
-    }
-    .trame-title .trame-desc {
-      color: var(--muted);
-      font-size: 0.83rem;
-    }
-
-    /* ----------- Radio icons ---------- */
-    .radio-icons {
-      display: inline-flex;
-      gap: 0.4rem;
-      padding: 0.25rem;
-      background: #f6f8fa;
-      border: 1px solid var(--border-soft);
-      border-radius: 8px;
-    }
-    .radio-icon {
-      width: 42px; height: 38px;
-      border: 1px solid transparent;
-      border-radius: 6px;
-      background: transparent;
-      cursor: pointer;
-      display: inline-flex; align-items: center; justify-content: center;
-      font-family: inherit;
-      padding: 0;
-      position: relative;
-      transition: all 0.15s ease;
-    }
-    .radio-icon svg { width: 22px; height: 22px; }
-    .radio-icon:hover:not(.unavailable):not(.selected) {
-      background: rgba(9, 105, 218, 0.05);
-    }
-    .radio-icon.selected {
+      gap: 0.85rem;
+      padding: 0.65rem 0.85rem;
       background: white;
+      border: 1px solid var(--border-soft);
+      border-radius: 7px;
+    }
+    .option-row.active {
       border-color: var(--accent);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      background: var(--accent-soft);
     }
-    .radio-icon.selected svg { color: var(--accent); }
-    .radio-icon.available svg { color: var(--text); }
-    .radio-icon.unavailable {
-      cursor: not-allowed;
-      opacity: 0.4;
+    .option-row .opt-info { flex: 1; }
+    .option-row .opt-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin: 0;
     }
-    .radio-icon.unavailable svg { color: var(--muted); }
-    .radio-icon.unavailable::after {
+    .option-row.active .opt-name { color: var(--accent); }
+    .option-row .opt-desc {
+      color: var(--muted);
+      font-size: 0.78rem;
+      margin: 0;
+    }
+    /* Toggle switch */
+    .toggle {
+      position: relative;
+      display: inline-block;
+      width: 44px; height: 24px;
+      flex-shrink: 0;
+    }
+    .toggle input {
+      opacity: 0; width: 0; height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #c1c7cf;
+      border-radius: 24px;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    .toggle-slider::before {
       content: "";
       position: absolute;
-      top: 50%; left: 8px; right: 8px;
-      height: 1.5px;
-      background: var(--muted);
-      transform: rotate(-20deg);
-      opacity: 0.6;
+      width: 18px; height: 18px;
+      left: 3px; top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
     }
+    .toggle input:checked + .toggle-slider { background: var(--accent); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+    .toggle input:disabled + .toggle-slider { opacity: 0.5; cursor: not-allowed; }
 
-    /* ----------- Trame body ---------- */
-    .trame-body {
-      margin-top: 0.9rem;
-      padding-top: 0.85rem;
-      border-top: 1px dashed var(--border-soft);
-    }
-    .build-status {
+    /* ----------- Build status + actions ---------- */
+    .build-summary {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      font-size: 0.85rem;
-      padding: 0.4rem 0.65rem;
-      border-radius: 5px;
-      margin-bottom: 0.65rem;
+      padding: 0.55rem 0.85rem;
+      border-radius: 6px;
+      margin-bottom: 0.8rem;
+      font-size: 0.88rem;
     }
-    .build-status.ok {
+    .build-summary.ok {
       background: var(--ok-bg);
       color: var(--ok);
     }
-    .build-status.ko {
+    .build-summary.ko {
       background: var(--warn-bg);
       color: var(--warn-text);
     }
-    .build-status .build-id {
+    .build-summary .build-id {
       font-family: ui-monospace, monospace;
       font-size: 0.85em;
       opacity: 0.85;
     }
-    .build-status .contact-note {
+    .build-summary .summary-end {
       margin-left: auto;
-      font-size: 0.8em;
+      font-size: 0.82em;
     }
+
     .actions {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
     }
+    @media (max-width: 520px) { .actions { grid-template-columns: 1fr; } }
     .action-btn {
-      flex: 1;
-      min-width: 180px;
       border: 1px solid var(--border);
       background: white;
-      padding: 0.5rem 0.85rem;
-      border-radius: 6px;
+      padding: 0.7rem 1rem;
+      border-radius: 7px;
       font-family: inherit;
-      font-size: 0.88rem;
+      font-size: 0.92rem;
       font-weight: 500;
       cursor: pointer;
-      display: flex; align-items: center; gap: 0.5rem;
+      display: flex; align-items: center; gap: 0.6rem;
       transition: all 0.15s ease;
+      text-align: left;
     }
-    .action-btn.update {
-      border-left: 3px solid var(--accent);
-    }
+    .action-btn.update { border-left: 3px solid var(--accent); }
     .action-btn.update:hover:not(:disabled) {
       background: var(--accent-soft);
       border-color: var(--accent);
     }
-    .action-btn.factory {
-      border-left: 3px solid var(--danger);
-    }
+    .action-btn.factory { border-left: 3px solid var(--danger); }
     .action-btn.factory:hover:not(:disabled) {
-      background: rgba(207, 34, 46, 0.08);
+      background: var(--danger-soft);
       border-color: var(--danger);
     }
     .action-btn:disabled {
@@ -299,13 +345,16 @@
       cursor: not-allowed;
       background: #f6f8fa;
     }
+    .action-btn .action-main {
+      display: flex; flex-direction: column; align-items: flex-start;
+    }
     .action-btn .action-sub {
       color: var(--muted);
       font-weight: 400;
       font-size: 0.78rem;
     }
 
-    /* esp-web-install-button : on cache son rendu par défaut, on utilise nos boutons en slot */
+    /* esp-web-install-button : on cache le rendu par défaut */
     esp-web-install-button::part(button) { all: unset; }
 
     /* ----------- Terminal ---------- */
@@ -426,16 +475,39 @@
     <!-- ====== GRID ====== -->
     <div class="grid">
 
-      <!-- ====== COLONNE GAUCHE : trames ====== -->
+      <!-- ====== COLONNE GAUCHE ====== -->
       <div>
-        <div class="version-banner" id="version-banner">
-          <span class="version-pill" id="version-pill">v…</span>
-          <span class="version-date" id="version-date">…</span>
-          <p class="version-notes" id="version-notes">Chargement…</p>
+
+        <!-- VERSION -->
+        <div class="section" id="section-version">
+          <h3 class="section-label">Version du firmware</h3>
+          <div class="version-banner">
+            <div class="ver-left">
+              <span class="version-pill" id="version-pill">v…</span>
+              <select class="version-select" id="version-select" style="display:none"></select>
+              <span class="version-date" id="version-date">…</span>
+            </div>
+            <p class="version-notes" id="version-notes">Chargement…</p>
+          </div>
         </div>
 
-        <div id="sections-root">
-          <p style="color: var(--muted); padding: 1rem;">Chargement de la matrice de builds…</p>
+        <!-- MODE -->
+        <div class="section">
+          <h3 class="section-label">Mode (capteurs)</h3>
+          <div class="mode-cards" id="mode-cards"></div>
+        </div>
+
+        <!-- OPTIONS RADIO -->
+        <div class="section">
+          <h3 class="section-label">Options radio</h3>
+          <div class="options-list" id="options-list"></div>
+        </div>
+
+        <!-- ACTION -->
+        <div class="section">
+          <h3 class="section-label">Action</h3>
+          <div class="build-summary" id="build-summary"></div>
+          <div class="actions" id="actions-zone"></div>
         </div>
 
         <footer>
@@ -464,46 +536,13 @@
         </div>
         <div class="terminal-foot">
           <span id="line-count">0 ligne</span>
+          <button id="btn-reclaim" style="display:none;background:transparent;border:1px solid #30363d;color:#58a6ff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.75rem;cursor:pointer;font-family:inherit;">Reprendre log</button>
           <span class="autoscroll-state" id="autoscroll-state">Auto-scroll : actif</span>
         </div>
       </div>
 
     </div>
   </div>
-
-  <!-- ====== SVG icônes radio (sprite) ====== -->
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <defs>
-      <symbol id="ico-gsm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <!-- antenne + barres -->
-        <line x1="12" y1="3" x2="12" y2="9"/>
-        <path d="M8 5 L12 3 L16 5"/>
-        <rect x="5" y="11" width="3" height="9" rx="0.5"/>
-        <rect x="10" y="9" width="3" height="11" rx="0.5"/>
-        <rect x="15" y="7" width="3" height="13" rx="0.5"/>
-      </symbol>
-      <symbol id="ico-lora" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <!-- onde radio -->
-        <circle cx="12" cy="14" r="1.5" fill="currentColor"/>
-        <path d="M8.5 10.5 a5 5 0 0 1 7 0"/>
-        <path d="M5.5 7.5 a9 9 0 0 1 13 0"/>
-        <path d="M9 17 h6"/>
-      </symbol>
-      <symbol id="ico-lora-gsm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <!-- antenne double -->
-        <line x1="8" y1="3" x2="8" y2="9"/>
-        <path d="M5 5 L8 3 L11 5"/>
-        <rect x="5" y="13" width="2.5" height="7" rx="0.5"/>
-        <line x1="16" y1="3" x2="16" y2="9"/>
-        <path d="M13 5 L16 3 L19 5"/>
-        <path d="M14.5 13 a3 3 0 0 1 4 0"/>
-        <circle cx="16.5" cy="15.5" r="0.8" fill="currentColor"/>
-      </symbol>
-    </defs>
-  </svg>
-
-  <!-- conteneur caché pour les wrappers esp-web-install-button -->
-  <div id="esp-wrappers-host" style="display:none"></div>
 
   <script>
   (() => {
@@ -514,7 +553,7 @@
     }
 
     // =========================
-    //  PORT MANAGER (partage)
+    //  PORT MANAGER
     // =========================
     const port = {
       device: null,
@@ -522,9 +561,7 @@
       reading: false,
       paused: false,
       flashing: false,
-      onLine: null,
       decoder: new TextDecoder(),
-      buffer: "",
     };
 
     async function connectPort() {
@@ -539,7 +576,6 @@
         }
       }
     }
-
     async function disconnectPort() {
       port.reading = false;
       if (port.reader) {
@@ -553,7 +589,6 @@
       }
       updatePortUI();
     }
-
     async function openAndRead() {
       if (!port.device) return;
       try {
@@ -562,11 +597,8 @@
         if (!/already open/i.test(e.message)) throw e;
       }
       port.reading = true;
-      readLoop().catch(err => {
-        terminal.write(`\n[ERREUR lecture] ${err.message}\n`);
-      });
+      readLoop().catch(err => terminal.write(`\n[ERREUR lecture] ${err.message}\n`));
     }
-
     async function readLoop() {
       while (port.reading && port.device && port.device.readable) {
         port.reader = port.device.readable.getReader();
@@ -575,25 +607,23 @@
             const { value, done } = await port.reader.read();
             if (done) break;
             if (value && !port.paused) {
-              const txt = port.decoder.decode(value, { stream: true });
-              terminal.write(txt);
+              terminal.write(port.decoder.decode(value, { stream: true }));
             }
           }
         } catch (e) {
-          // interrompu (ex: flashing)
+          // interrompu
         } finally {
           try { port.reader.releaseLock(); } catch {}
           port.reader = null;
         }
         if (port.flashing) {
-          // pause volontaire le temps du flash
           while (port.flashing) await new Promise(r => setTimeout(r, 200));
         }
       }
     }
-
-    // Libère temporairement le port pour ESP Web Tools, puis le reprend
     async function releasePortForFlash() {
+      // Ferme silencieusement le port pour qu'ESP Web Tools puisse l'ouvrir.
+      // Le port reste référencé dans port.device pour qu'on puisse le reprendre apres.
       port.flashing = true;
       port.reading = false;
       if (port.reader) {
@@ -604,18 +634,20 @@
       if (port.device) {
         try { await port.device.close(); } catch {}
       }
-      terminal.write("\n[PORT] libéré pour le flash…\n");
+      updatePortUI();
     }
     async function reclaimPortAfterFlash() {
       port.flashing = false;
       if (port.device) {
-        terminal.write("[PORT] reprise du log\n");
         port.reading = true;
+        // Petite attente : ESP Web Tools peut prendre un moment a relacher le port apres le flash
+        await new Promise(r => setTimeout(r, 500));
         try {
           await port.device.open({ baudRate: 115200 });
           readLoop();
         } catch (e) {
-          terminal.write(`[PORT] impossible de reprendre : ${e.message}\n`);
+          // Si on n'arrive pas a rouvrir, on considere le port comme deconnecte
+          port.device = null;
         }
       }
       updatePortUI();
@@ -626,9 +658,10 @@
       const val = document.getElementById("port-value");
       const btn = document.getElementById("btn-port");
       const tdot = document.getElementById("term-dot");
+      const reclaim = document.getElementById("btn-reclaim");
       if (port.device) {
         dot.classList.add("connected");
-        tdot.classList.add("live");
+        tdot.classList.toggle("live", !port.flashing);
         const info = port.device.getInfo();
         const label = info.usbVendorId
           ? `USB ${info.usbVendorId.toString(16).padStart(4,"0")}:${(info.usbProductId||0).toString(16).padStart(4,"0")}`
@@ -636,22 +669,25 @@
         val.textContent = label;
         btn.textContent = "Déconnecter";
         btn.classList.add("disconnect");
+        reclaim.style.display = port.flashing ? "" : "none";
       } else {
         dot.classList.remove("connected");
         tdot.classList.remove("live");
         val.textContent = "aucun";
         btn.textContent = "Connecter";
         btn.classList.remove("disconnect");
+        reclaim.style.display = "none";
       }
     }
-
     document.getElementById("btn-port").addEventListener("click", () => {
-      if (port.device) disconnectPort();
-      else connectPort();
+      if (port.device) disconnectPort(); else connectPort();
+    });
+    document.getElementById("btn-reclaim").addEventListener("click", () => {
+      if (port.device && port.flashing) reclaimPortAfterFlash();
     });
 
     // =========================
-    //  TERMINAL UI
+    //  TERMINAL
     // =========================
     const terminal = (() => {
       const body = document.getElementById("term-body");
@@ -664,32 +700,26 @@
       function isAtBottom() {
         return body.scrollHeight - body.scrollTop - body.clientHeight < 4;
       }
-
       body.addEventListener("scroll", () => {
         stickToBottom = isAtBottom();
         autoscrollEl.textContent = stickToBottom ? "Auto-scroll : actif" : "Auto-scroll : pause (scroll utilisateur)";
         autoscrollEl.classList.toggle("off", !stickToBottom);
       });
-
       function clearEmpty() {
         const e = body.querySelector(".empty");
         if (e) body.innerHTML = "";
       }
-
       function write(text) {
         clearEmpty();
         buffer += text;
-        // flush par lignes
         const lines = buffer.split("\n");
-        buffer = lines.pop(); // garde le morceau incomplet
+        buffer = lines.pop();
         for (const line of lines) {
           const div = document.createElement("div");
           div.textContent = line;
           body.appendChild(div);
           lineCount++;
         }
-        // morceau partiel : on l'affiche aussi en tant que ligne courante
-        // (mais sans incrémenter le compteur jusqu'au \\n)
         let trailing = body.querySelector(".__trailing");
         if (trailing) trailing.remove();
         if (buffer) {
@@ -698,18 +728,11 @@
           trailing.textContent = buffer;
           body.appendChild(trailing);
         }
-
         lineCountEl.textContent = `${lineCount} ligne${lineCount > 1 ? "s" : ""}`;
-
-        if (stickToBottom) {
-          body.scrollTop = body.scrollHeight;
-        }
-
-        // cap mémoire : limite à 5000 lignes
+        if (stickToBottom) body.scrollTop = body.scrollHeight;
         const max = 5000;
         if (lineCount > max) {
-          const toRemove = lineCount - max;
-          for (let i = 0; i < toRemove; i++) {
+          for (let i = 0; i < lineCount - max; i++) {
             const first = body.firstChild;
             if (first && !first.classList?.contains("__trailing")) {
               body.removeChild(first);
@@ -718,16 +741,13 @@
           }
         }
       }
-
       document.getElementById("btn-pause").addEventListener("click", (e) => {
         port.paused = !port.paused;
         e.target.textContent = port.paused ? "Resume" : "Pause";
         e.target.style.color = port.paused ? "#d29922" : "";
       });
       document.getElementById("btn-clear").addEventListener("click", () => {
-        body.innerHTML = "";
-        lineCount = 0;
-        buffer = "";
+        body.innerHTML = ""; lineCount = 0; buffer = "";
         lineCountEl.textContent = "0 ligne";
       });
       document.getElementById("btn-save").addEventListener("click", () => {
@@ -736,177 +756,256 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0,19);
+        const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
         a.download = `lora-lte-node-${ts}.log`;
         a.click();
         URL.revokeObjectURL(url);
       });
-
       return { write };
     })();
 
     // =========================
-    //  FLASHER
+    //  STATE & RENDERING
     // =========================
-    function buildKey(trameId, radioId) { return `${trameId}-${radioId}`; }
+    const state = {
+      data: null,
+      currentVersion: null,
+      currentTrame: null,
+      gsm: true,
+      lora: false,
+    };
 
-    function attachInstallButton(buttonEl, manifestUrl) {
-      // ESP Web Tools : on crée un wrapper qui contient nos boutons en tant que slot "activate"
-      const wrapper = document.createElement("esp-web-install-button");
-      wrapper.setAttribute("manifest", manifestUrl);
-
-      const slotBtn = buttonEl.cloneNode(true);
-      slotBtn.setAttribute("slot", "activate");
-      wrapper.appendChild(slotBtn);
-
-      // Slots auxiliaires
-      const unsupported = document.createElement("span");
-      unsupported.setAttribute("slot", "unsupported");
-      unsupported.textContent = "Navigateur non supporté";
-      wrapper.appendChild(unsupported);
-
-      // Écouter les events ESP Web Tools pour libérer/reprendre le port
-      wrapper.addEventListener("state-changed", (ev) => {
-        const state = ev.detail.state;
-        if (state === "initializing" || state === "manifest" || state === "preparing") {
-          if (port.device && !port.flashing) releasePortForFlash();
-        } else if (state === "finished" || state === "error") {
-          if (port.device && port.flashing) reclaimPortAfterFlash();
-        }
-        terminal.write(`[FLASH] état: ${state}\n`);
-      });
-
-      buttonEl.replaceWith(wrapper);
-      return wrapper;
+    function radioKey() {
+      if (state.gsm && state.lora) return "lora-gsm";
+      if (state.gsm) return "gsm";
+      if (state.lora) return "lora";
+      return null;
+    }
+    function radioLabel() {
+      if (state.gsm && state.lora) return "GSM + LoRa";
+      if (state.gsm) return "GSM seul";
+      if (state.lora) return "LoRa seul";
+      return "(aucune radio)";
+    }
+    function buildKey() {
+      const r = radioKey();
+      return r ? `${state.currentTrame}-${r}` : null;
+    }
+    function buildId() {
+      const k = buildKey();
+      return k ? `v${state.currentVersion.id}-${k}` : "";
     }
 
-    function renderTrameCard(version, trame, radios, container) {
-      const card = document.createElement("section");
-      card.className = "trame-card";
-      card.dataset.trame = trame.id;
+    function renderVersion() {
+      const versions = state.data.versions;
+      const v = state.currentVersion;
+      document.getElementById("version-pill").textContent = `v${v.id}`;
+      document.getElementById("version-date").textContent = v.date;
+      document.getElementById("version-notes").textContent = v.notes;
 
-      // défaut : première radio dispo, sinon première
-      let defaultRadio = radios.find(r => version.builds[buildKey(trame.id, r.id)]?.available);
-      if (!defaultRadio) defaultRadio = radios[0];
+      const sel = document.getElementById("version-select");
+      if (versions.length > 1) {
+        sel.style.display = "";
+        sel.innerHTML = versions.map(ver =>
+          `<option value="${ver.id}"${ver.id === v.id ? " selected" : ""}>v${ver.id}</option>`
+        ).join("");
+        sel.onchange = () => {
+          state.currentVersion = versions.find(ver => ver.id === sel.value);
+          render();
+        };
+      } else {
+        sel.style.display = "none";
+      }
+    }
 
-      const iconsHtml = radios.map(r => {
-        const build = version.builds[buildKey(trame.id, r.id)] || {};
-        const cls = build.available ? "available" : "unavailable";
-        const tt = `${r.tooltip}${build.available ? "" : " — build non disponible"}`;
-        return `
-          <button class="radio-icon ${cls}"
-                  data-radio="${r.id}"
-                  title="${tt.replace(/"/g, '&quot;')}"
-                  ${build.available ? "" : "disabled"}>
-            <svg><use href="#ico-${r.id}"/></svg>
-          </button>`;
-      }).join("");
-
-      card.innerHTML = `
-        <div class="trame-head">
-          <div class="trame-title">
-            <h2>${trame.label}</h2>
-            <span class="trame-desc">${trame.description}</span>
-          </div>
-          <div class="radio-icons" data-role="radio-icons">${iconsHtml}</div>
-        </div>
-        <div class="trame-body">
-          <div class="build-status" data-role="status"></div>
-          <div class="actions">
-            <button class="action-btn update" data-role="btn-update">
-              <span>↻ Mise à jour</span>
-              <span class="action-sub">NVS conservée</span>
-            </button>
-            <button class="action-btn factory" data-role="btn-factory">
-              <span>⚠️ Flash usine</span>
-              <span class="action-sub">efface tout</span>
-            </button>
-          </div>
-        </div>
-      `;
-      container.appendChild(card);
-
-      const radioIcons = card.querySelectorAll(".radio-icon");
-      const statusEl = card.querySelector('[data-role="status"]');
-      let selectedRadio = defaultRadio.id;
-
-      function refresh() {
-        // visuel icônes
-        radioIcons.forEach(ic => {
-          ic.classList.toggle("selected", ic.dataset.radio === selectedRadio);
+    function renderModeCards() {
+      const root = document.getElementById("mode-cards");
+      root.innerHTML = "";
+      for (const trame of state.data.trames) {
+        const card = document.createElement("div");
+        card.className = "mode-card" + (trame.id === state.currentTrame ? " selected" : "");
+        card.innerHTML = `
+          <p class="mode-name">${trame.label}</p>
+          <p class="mode-desc">${trame.description}</p>`;
+        card.addEventListener("click", () => {
+          state.currentTrame = trame.id;
+          render();
         });
-        card.classList.toggle("has-selection", true);
+        root.appendChild(card);
+      }
+    }
 
-        const build = version.builds[buildKey(trame.id, selectedRadio)] || {};
-        const buildName = `v${version.id}-${trame.id}-${selectedRadio}`;
+    function renderOptions() {
+      const root = document.getElementById("options-list");
+      root.innerHTML = "";
+      const options = [
+        { id: "gsm",  name: "GSM",  desc: "Modem cellulaire SIM7080G (LTE-M / NB-IoT)" },
+        { id: "lora", name: "LoRa", desc: "Radio LoRaWAN SX1262 (EU868)" },
+      ];
+      for (const opt of options) {
+        const isActive = state[opt.id];
+        const row = document.createElement("div");
+        row.className = "option-row" + (isActive ? " active" : "");
+        row.innerHTML = `
+          <div class="opt-info">
+            <p class="opt-name">${opt.name}</p>
+            <p class="opt-desc">${opt.desc}</p>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" data-opt="${opt.id}" ${isActive ? "checked" : ""}>
+            <span class="toggle-slider"></span>
+          </label>`;
+        root.appendChild(row);
 
-        // Remplace les boutons pour repartir d'un état propre
-        const oldUpdate = card.querySelector('[data-role="btn-update"]') ||
-                          card.querySelector("esp-web-install-button[data-mode='update']");
-        const oldFactory = card.querySelector('[data-role="btn-factory"]') ||
-                           card.querySelector("esp-web-install-button[data-mode='factory']");
+        const input = row.querySelector("input");
+        input.addEventListener("change", (e) => {
+          const wantOff = !e.target.checked;
+          // Si on essaye de tout désactiver, on l'en empêche
+          if (wantOff) {
+            const other = opt.id === "gsm" ? state.lora : state.gsm;
+            if (!other) {
+              e.target.checked = true;
+              return;
+            }
+          }
+          state[opt.id] = e.target.checked;
+          render();
+        });
+      }
+    }
 
-        const newUpdate = document.createElement("button");
-        newUpdate.className = "action-btn update";
-        newUpdate.dataset.role = "btn-update";
-        newUpdate.innerHTML = `<span>↻ Mise à jour</span><span class="action-sub">NVS conservée</span>`;
+    function renderAction() {
+      const summary = document.getElementById("build-summary");
+      const actions = document.getElementById("actions-zone");
+      actions.innerHTML = "";
 
-        const newFactory = document.createElement("button");
-        newFactory.className = "action-btn factory";
-        newFactory.dataset.role = "btn-factory";
-        newFactory.innerHTML = `<span>⚠️ Flash usine</span><span class="action-sub">efface tout</span>`;
-
-        oldUpdate.replaceWith(newUpdate);
-        oldFactory.replaceWith(newFactory);
-
-        if (build.available) {
-          statusEl.className = "build-status ok";
-          statusEl.innerHTML = `<span>✓ Build disponible :</span><span class="build-id">${buildName}</span>`;
-
-          const wUpdate = attachInstallButton(newUpdate, build.manifestUpdate);
-          wUpdate.dataset.mode = "update";
-          const wFactory = attachInstallButton(newFactory, build.manifestFactory);
-          wFactory.dataset.mode = "factory";
-        } else {
-          statusEl.className = "build-status ko";
-          statusEl.innerHTML = `<span>⚠️ Build non disponible :</span><span class="build-id">${buildName}</span><span class="contact-note">Compilation à la demande sur demande</span>`;
-          newUpdate.disabled = true;
-          newFactory.disabled = true;
-        }
+      const r = radioKey();
+      if (!r) {
+        summary.className = "build-summary ko";
+        summary.innerHTML = `<span>⚠️ Sélectionnez au moins une radio (GSM ou LoRa).</span>`;
+        return;
       }
 
-      radioIcons.forEach(ic => {
-        ic.addEventListener("click", () => {
-          if (ic.disabled) return;
-          selectedRadio = ic.dataset.radio;
-          refresh();
-        });
-      });
+      const build = state.currentVersion.builds[buildKey()] || {};
+      const id = buildId();
 
-      refresh();
+      if (build.available) {
+        summary.className = "build-summary ok";
+        summary.innerHTML = `<span>✓ Configuration : <strong>${radioLabel()}</strong> · </span><span class="build-id">${id}</span>`;
+
+        // Update button
+        const upBtn = document.createElement("button");
+        upBtn.className = "action-btn update";
+        upBtn.innerHTML = `
+          <span>↻</span>
+          <span class="action-main">
+            <span>Mise à jour firmware</span>
+            <span class="action-sub">NVS conservée (clés, paramètres, buffers)</span>
+          </span>`;
+        const upWrap = document.createElement("esp-web-install-button");
+        upWrap.setAttribute("manifest", build.manifestUpdate);
+        upBtn.setAttribute("slot", "activate");
+        upWrap.appendChild(upBtn);
+        attachFlashListeners(upWrap, "update");
+        actions.appendChild(upWrap);
+
+        // Factory button
+        const facBtn = document.createElement("button");
+        facBtn.className = "action-btn factory";
+        facBtn.innerHTML = `
+          <span>⚠️</span>
+          <span class="action-main">
+            <span>Flash usine complet</span>
+            <span class="action-sub">Efface tout, perte des clés LoRa</span>
+          </span>`;
+        const facWrap = document.createElement("esp-web-install-button");
+        facWrap.setAttribute("manifest", build.manifestFactory);
+        facBtn.setAttribute("slot", "activate");
+        facWrap.appendChild(facBtn);
+        attachFlashListeners(facWrap, "factory");
+        actions.appendChild(facWrap);
+
+      } else {
+        summary.className = "build-summary ko";
+        summary.innerHTML = `<span>⚠️ Build non disponible : </span><span class="build-id">${id}</span><span class="summary-end">Compilation à la demande</span>`;
+
+        const upBtn = document.createElement("button");
+        upBtn.className = "action-btn update";
+        upBtn.disabled = true;
+        upBtn.innerHTML = `<span>↻</span><span class="action-main"><span>Mise à jour firmware</span><span class="action-sub">build indisponible</span></span>`;
+
+        const facBtn = document.createElement("button");
+        facBtn.className = "action-btn factory";
+        facBtn.disabled = true;
+        facBtn.innerHTML = `<span>⚠️</span><span class="action-main"><span>Flash usine complet</span><span class="action-sub">build indisponible</span></span>`;
+
+        actions.appendChild(upBtn);
+        actions.appendChild(facBtn);
+      }
+    }
+
+    function attachFlashListeners(wrapper, mode) {
+      // Intercepte le clic en phase capture : on libere le port AVANT qu'ESP Web Tools
+      // tente de l'ouvrir. C'est plus fiable que d'attendre ses events state-changed.
+      wrapper.addEventListener("click", async (ev) => {
+        if (port.device && !port.flashing) {
+          await releasePortForFlash();
+        }
+      }, true);
+
+      // Reprise du port apres flash via les events ESP Web Tools (compatibilite v10)
+      const reclaimStates = new Set([
+        "FINISHED", "finished", "ERROR", "error", "ABORTED", "aborted"
+      ]);
+      const onStateChange = (ev) => {
+        const s = ev.detail?.state || ev.detail?.installState || ev.detail;
+        const sStr = typeof s === "string" ? s : s?.state;
+        if (sStr && reclaimStates.has(sStr) && port.device && port.flashing) {
+          reclaimPortAfterFlash();
+        }
+      };
+      wrapper.addEventListener("state-changed", onStateChange);
+      wrapper.addEventListener("installation-state-changed", onStateChange);
+    }
+
+    function render() {
+      renderVersion();
+      renderModeCards();
+      renderOptions();
+      renderAction();
     }
 
     async function init() {
-      const root = document.getElementById("sections-root");
       let data;
       try {
         const res = await fetch("builds.json", { cache: "no-cache" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         data = await res.json();
       } catch (e) {
-        root.innerHTML = `<div class="browser-warn show">Impossible de charger <code>builds.json</code> : ${e.message}</div>`;
+        document.getElementById("section-version").innerHTML =
+          `<div class="browser-warn show">Impossible de charger <code>builds.json</code> : ${e.message}</div>`;
         return;
       }
 
-      const version = data.versions[0];
-      document.getElementById("version-pill").textContent = `v${version.id}`;
-      document.getElementById("version-date").textContent = version.date;
-      document.getElementById("version-notes").textContent = version.notes;
+      state.data = data;
+      state.currentVersion = data.versions[0];
+      // Trame par défaut : celle qui a au moins une combo dispo, sinon la 1re
+      const trameWithBuild = data.trames.find(t =>
+        Object.entries(state.currentVersion.builds).some(([k, v]) => k.startsWith(t.id + "-") && v.available)
+      );
+      state.currentTrame = (trameWithBuild || data.trames[0]).id;
 
-      root.innerHTML = "";
-      for (const trame of data.trames) {
-        renderTrameCard(version, trame, data.radios, root);
+      // Radios par défaut : la première combo dispo pour la trame, sinon GSM
+      const availableForTrame = Object.entries(state.currentVersion.builds)
+        .filter(([k, v]) => k.startsWith(state.currentTrame + "-") && v.available)
+        .map(([k]) => k.slice(state.currentTrame.length + 1));
+      if (availableForTrame.length) {
+        const first = availableForTrame[0]; // "gsm" | "lora" | "lora-gsm"
+        state.gsm = first === "gsm" || first === "lora-gsm";
+        state.lora = first === "lora" || first === "lora-gsm";
       }
+
+      render();
     }
 
     init();
