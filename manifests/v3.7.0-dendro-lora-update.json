@@ -1,0 +1,13 @@
+{
+  "name": "LoRa-LTE Node v3.7.0 DENDRO LoRa - Mise a jour",
+  "version": "3.7.0",
+  "new_install_prompt_erase": false,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "../firmware/v3.7.0-dendro-lora-full.bin", "offset": 0 }
+      ]
+    }
+  ]
+}
