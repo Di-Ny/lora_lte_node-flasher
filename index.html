@@ -831,6 +831,28 @@
       return k ? `v${state.currentVersion.id}-${k}` : "";
     }
 
+    // Comparaison semver-like : "3.8.0" > "3.7.0", "3.10.0" > "3.9.0", "3.8.0-rc1" < "3.8.0"
+    // Retourne <0 si a<b, 0 si egal, >0 si a>b
+    function compareVersions(a, b) {
+      const splitPre = s => {
+        const i = s.indexOf("-");
+        return i < 0 ? [s, ""] : [s.slice(0, i), s.slice(i + 1)];
+      };
+      const [aNum, aPre] = splitPre(String(a));
+      const [bNum, bPre] = splitPre(String(b));
+      const aParts = aNum.split(".").map(n => parseInt(n, 10) || 0);
+      const bParts = bNum.split(".").map(n => parseInt(n, 10) || 0);
+      const len = Math.max(aParts.length, bParts.length);
+      for (let i = 0; i < len; i++) {
+        const diff = (aParts[i] || 0) - (bParts[i] || 0);
+        if (diff !== 0) return diff;
+      }
+      // Numerique egal : une version SANS pre-release > version AVEC (semver 11)
+      if (aPre === "" && bPre !== "") return 1;
+      if (aPre !== "" && bPre === "") return -1;
+      return aPre.localeCompare(bPre);
+    }
+
     function renderVersion() {
       const versions = state.data.versions;
       const v = state.currentVersion;
@@ -1021,6 +1043,9 @@
           `<div class="browser-warn show">Impossible de charger <code>builds.json</code> : ${e.message}</div>`;
         return;
       }
+
+      // Tri semver-like : version la plus recente en tete (independamment de l'ordre du JSON)
+      data.versions.sort((a, b) => compareVersions(b.id, a.id));
 
       state.data = data;
       state.currentVersion = data.versions[0];
