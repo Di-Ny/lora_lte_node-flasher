@@ -1,0 +1,13 @@
+{
+  "name": "LoRa-LTE Node v3.8.0 V1NTC GSM - Flash usine",
+  "version": "3.8.0",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "../firmware/v3.8.0-inrae-v1ntc-gsm-full.bin", "offset": 0 }
+      ]
+    }
+  ]
+}
