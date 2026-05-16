@@ -101,6 +101,134 @@
     .btn-port:hover { background: var(--accent-hover); }
     .btn-port.disconnect { background: var(--muted); }
 
+    /* ----------- Server selector (CRITICAL : must be chosen first) ---------- */
+    .server-section {
+      background: var(--card);
+      border: 2px solid var(--warn-border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 6px rgba(212, 167, 44, 0.15);
+    }
+    .server-section.chosen {
+      border-color: var(--ok);
+      box-shadow: 0 2px 4px rgba(26, 127, 55, 0.1);
+    }
+    .server-warning {
+      background: var(--warn-bg);
+      color: var(--warn-text);
+      padding: 0.55rem 0.75rem;
+      border-radius: 5px;
+      margin-bottom: 0.75rem;
+      font-size: 0.88rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .server-section.chosen .server-warning {
+      background: var(--ok-bg);
+      color: var(--ok);
+    }
+    .server-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.7rem;
+    }
+    @media (max-width: 520px) { .server-cards { grid-template-columns: 1fr; } }
+    .server-card {
+      background: white;
+      border: 2px solid var(--border-soft);
+      border-radius: 7px;
+      padding: 0.85rem 1rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+    .server-card:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .server-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .server-card.selected::after {
+      content: "✓";
+      position: absolute;
+      top: 0.5rem; right: 0.7rem;
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+    .server-card .server-name {
+      font-weight: 600;
+      font-size: 1.05rem;
+      margin: 0 0 0.2rem;
+    }
+    .server-card.selected .server-name { color: var(--accent); }
+    .server-card .server-desc {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin: 0;
+    }
+    .server-card .server-endpoint {
+      font-family: ui-monospace, monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+      opacity: 0.8;
+    }
+
+    /* Locked sections (everything below "Server" until a server is chosen) */
+    .locked-zone {
+      position: relative;
+    }
+    .locked-zone.locked > * {
+      filter: blur(3px);
+      opacity: 0.5;
+      pointer-events: none;
+      user-select: none;
+    }
+    .locked-zone .lock-overlay {
+      display: none;
+    }
+    .locked-zone.locked .lock-overlay {
+      display: flex;
+      position: absolute;
+      inset: 0;
+      background: rgba(246, 248, 250, 0.4);
+      backdrop-filter: blur(2px);
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 4rem;
+      z-index: 10;
+      pointer-events: auto;
+    }
+    .locked-zone.locked .lock-overlay .lock-msg {
+      background: white;
+      border: 1px solid var(--warn-border);
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 420px;
+    }
+    .locked-zone.locked .lock-overlay .lock-icon {
+      font-size: 1.8rem;
+      margin-bottom: 0.3rem;
+    }
+    .locked-zone.locked .lock-overlay .lock-title {
+      font-weight: 600;
+      color: var(--warn-text);
+      margin: 0 0 0.3rem;
+    }
+    .locked-zone.locked .lock-overlay .lock-detail {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin: 0;
+    }
+
     /* ----------- Grid 2 cols ---------- */
     .grid {
       display: grid;
@@ -478,16 +606,39 @@
       <!-- ====== COLONNE GAUCHE ====== -->
       <div>
 
-        <!-- VERSION -->
-        <div class="section" id="section-version">
-          <h3 class="section-label">Version du firmware</h3>
-          <div class="version-banner">
-            <div class="ver-left">
-              <span class="version-pill" id="version-pill">v…</span>
-              <select class="version-select" id="version-select" style="display:none"></select>
-              <span class="version-date" id="version-date">…</span>
+        <!-- SERVEUR (CRITIQUE : doit etre choisi en premier) -->
+        <div class="server-section" id="server-section">
+          <h3 class="section-label">Serveur destinataire</h3>
+          <div class="server-warning" id="server-warning">
+            <span id="server-warning-icon">⚠️</span>
+            <span id="server-warning-text">
+              <strong>Important :</strong> choisissez le serveur de destination avant de continuer.
+              Un mauvais choix enverra les données du device au mauvais serveur.
+            </span>
+          </div>
+          <div class="server-cards" id="server-cards"></div>
+        </div>
+
+        <!-- TOUT EN DESSOUS EST VERROUILLE TANT QU AUCUN SERVEUR N EST CHOISI -->
+        <div class="locked-zone locked" id="locked-zone">
+          <div class="lock-overlay">
+            <div class="lock-msg">
+              <div class="lock-icon">🔒</div>
+              <p class="lock-title">Sélectionnez d'abord un serveur</p>
+              <p class="lock-detail">Le choix du serveur conditionne l'ensemble des builds disponibles. Cliquez sur INRAE ou Test au-dessus.</p>
             </div>
-            <p class="version-notes" id="version-notes">Chargement…</p>
+          </div>
+
+          <!-- VERSION -->
+          <div class="section" id="section-version">
+            <h3 class="section-label">Version du firmware</h3>
+            <div class="version-banner">
+              <div class="ver-left">
+                <span class="version-pill" id="version-pill">v…</span>
+                <select class="version-select" id="version-select" style="display:none"></select>
+                <span class="version-date" id="version-date">…</span>
+              </div>
+              <p class="version-notes" id="version-notes">Chargement…</p>
           </div>
         </div>
 
@@ -509,6 +660,8 @@
           <div class="build-summary" id="build-summary"></div>
           <div class="actions" id="actions-zone"></div>
         </div>
+
+        </div><!-- /.locked-zone -->
 
         <footer>
           <a href="https://github.com/Di-Ny/lora_lte_node-flasher" target="_blank" rel="noopener">github.com/Di-Ny/lora_lte_node-flasher</a>
@@ -808,6 +961,7 @@
     // =========================
     const state = {
       data: null,
+      currentServer: null,  // null = pas encore choisi -> locked-zone reste verrouille
       currentVersion: null,
       currentTrame: null,
       gsm: true,
@@ -828,7 +982,8 @@
     }
     function buildKey() {
       const r = radioKey();
-      return r ? `${state.currentTrame}-${r}` : null;
+      if (!r || !state.currentServer) return null;
+      return `${state.currentServer}-${state.currentTrame}-${r}`;
     }
     function buildId() {
       const k = buildKey();
@@ -1029,7 +1184,73 @@
       wrapper.addEventListener("installation-state-changed", onStateChange);
     }
 
+    function renderServerCards() {
+      const root = document.getElementById("server-cards");
+      const servers = state.data.servers || [];
+      root.innerHTML = "";
+      for (const srv of servers) {
+        const card = document.createElement("div");
+        card.className = "server-card" + (srv.id === state.currentServer ? " selected" : "");
+        card.innerHTML = `
+          <p class="server-name">${srv.label}</p>
+          <p class="server-desc">${srv.description || ""}</p>
+          <p class="server-endpoint">${srv.endpoint || ""}</p>`;
+        card.addEventListener("click", () => {
+          state.currentServer = srv.id;
+          // Re-init trame & radio par defaut en fonction du serveur choisi
+          pickDefaultsForCurrentServer();
+          render();
+        });
+        root.appendChild(card);
+      }
+
+      // Met a jour l'overlay de verrouillage et le style de la section serveur
+      const lockedZone = document.getElementById("locked-zone");
+      const serverSection = document.getElementById("server-section");
+      const warningIcon = document.getElementById("server-warning-icon");
+      const warningText = document.getElementById("server-warning-text");
+      if (state.currentServer) {
+        lockedZone.classList.remove("locked");
+        serverSection.classList.add("chosen");
+        const chosen = servers.find(s => s.id === state.currentServer);
+        warningIcon.textContent = "✓";
+        warningText.innerHTML = `Serveur sélectionné : <strong>${chosen.label}</strong> (${chosen.endpoint || ""})`;
+      } else {
+        lockedZone.classList.add("locked");
+        serverSection.classList.remove("chosen");
+        warningIcon.textContent = "⚠️";
+        warningText.innerHTML = "<strong>Important :</strong> choisissez le serveur de destination avant de continuer. Un mauvais choix enverra les données du device au mauvais serveur.";
+      }
+    }
+
+    // Quand on (re)choisit un serveur, on selectionne la 1re combo dispo
+    function pickDefaultsForCurrentServer() {
+      if (!state.currentServer) return;
+      const prefix = state.currentServer + "-";
+      // Trouve une trame qui a au moins une combo dispo pour ce serveur
+      const trameWithBuild = state.data.trames.find(t =>
+        Object.entries(state.currentVersion.builds).some(
+          ([k, v]) => k.startsWith(prefix + t.id + "-") && v.available
+        )
+      );
+      state.currentTrame = (trameWithBuild || state.data.trames[0]).id;
+
+      const tramePrefix = prefix + state.currentTrame + "-";
+      const availableForTrame = Object.entries(state.currentVersion.builds)
+        .filter(([k, v]) => k.startsWith(tramePrefix) && v.available)
+        .map(([k]) => k.slice(tramePrefix.length));
+      if (availableForTrame.length) {
+        const first = availableForTrame[0];
+        state.gsm = first === "gsm" || first === "lora-gsm";
+        state.lora = first === "lora" || first === "lora-gsm";
+      } else {
+        state.gsm = true;
+        state.lora = false;
+      }
+    }
+
     function render() {
+      renderServerCards();
       renderVersion();
       renderModeCards();
       renderOptions();
@@ -1052,22 +1273,29 @@
       data.versions.sort((a, b) => compareVersions(b.id, a.id));
 
       state.data = data;
-      state.currentVersion = data.versions[0];
-      // Trame par défaut : celle qui a au moins une combo dispo, sinon la 1re
-      const trameWithBuild = data.trames.find(t =>
-        Object.entries(state.currentVersion.builds).some(([k, v]) => k.startsWith(t.id + "-") && v.available)
-      );
-      state.currentTrame = (trameWithBuild || data.trames[0]).id;
 
-      // Radios par défaut : la première combo dispo pour la trame, sinon GSM
-      const availableForTrame = Object.entries(state.currentVersion.builds)
-        .filter(([k, v]) => k.startsWith(state.currentTrame + "-") && v.available)
-        .map(([k]) => k.slice(state.currentTrame.length + 1));
-      if (availableForTrame.length) {
-        const first = availableForTrame[0]; // "gsm" | "lora" | "lora-gsm"
-        state.gsm = first === "gsm" || first === "lora-gsm";
-        state.lora = first === "lora" || first === "lora-gsm";
+      // Cas "aucune version publiee" : on affiche un message clair
+      if (!data.versions || data.versions.length === 0) {
+        document.getElementById("section-version").innerHTML =
+          `<h3 class="section-label">Version du firmware</h3>
+           <div class="browser-warn show">Aucune version disponible pour l'instant. Lancez <code>build_release.ps1</code> ou <code>build_release.sh</code> pour publier une release.</div>`;
+        // On rend juste les server cards (overlay reste verrouille de toute facon)
+        renderServerCards();
+        return;
       }
+
+      state.currentVersion = data.versions[0];
+
+      // Trame & radio par defaut : 1er element du catalogue (sera mis a jour
+      // quand l'utilisateur choisira un serveur, via pickDefaultsForCurrentServer)
+      state.currentTrame = data.trames[0].id;
+      state.gsm = true;
+      state.lora = false;
+
+      // IMPORTANT : on ne choisit AUCUN serveur par defaut.
+      // L'overlay restera donc affiche tant que l'utilisateur ne clique pas
+      // sur INRAE ou Test (choix conscient obligatoire).
+      state.currentServer = null;
 
       render();
     }

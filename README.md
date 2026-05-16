@@ -14,11 +14,14 @@ Aucune installation requise — tout s'exécute dans le navigateur via [ESP Web 
 |------|--------|
 | 1 | Brancher le node sur un port USB-C |
 | 2 | Ouvrir [https://di-ny.github.io/lora_lte_node-flasher/](https://di-ny.github.io/lora_lte_node-flasher/) sur **Chrome**, **Edge** ou **Opera** desktop |
-| 3 | Cliquer **Connecter** dans la barre du haut et sélectionner le port COM |
-| 4 | Choisir la **version** (dropdown), le **mode** (V1 / V1NTC / DENDRO) et les **options radio** (GSM / LoRa / GSM+LoRa) |
-| 5 | Cliquer **Mise à jour** (NVS préservée) ou **Flash usine** (efface tout) |
-| 6 | Confirmer l'erase (si Flash usine), confirmer le port → flash lance |
-| 7 | À la fin, le terminal série reprend automatiquement le log du device |
+| 3 | **⚠️ Choisir le serveur destinataire en premier** (INRAE ou Test). Tant qu'aucun serveur n'est choisi, tout le reste de la page est verrouillé (overlay flou). |
+| 4 | Cliquer **Connecter** dans la barre du haut et sélectionner le port COM |
+| 5 | Choisir la **version** (dropdown), le **mode** (V1 / V1NTC / DENDRO) et les **options radio** (GSM / LoRa / GSM+LoRa) |
+| 6 | Cliquer **Mise à jour** (NVS préservée) ou **Flash usine** (efface tout) |
+| 7 | Confirmer l'erase (si Flash usine), confirmer le port → flash lance |
+| 8 | À la fin, le terminal série reprend automatiquement le log du device |
+
+**Pourquoi le choix de serveur est critique** : le firmware envoie ses données vers un serveur HTTP (INRAE = `iot.pclim.net`, Test = `superviseur.furgo.fr`). Un mauvais choix au moment du flash envoie les données du device chez le mauvais destinataire — d'où le verrouillage de la page.
 
 Firefox et Safari ne sont **pas** supportés (Web Serial est Chromium-only).
 
@@ -72,10 +75,14 @@ lora_lte_node-flasher/
 
 ### `builds.json` — catalogue des builds
 
-Décrit la matrice **trames × radios × versions** et où trouver chaque manifest. Lu par le JS au chargement de la page.
+Décrit la matrice **serveurs × trames × radios × versions** et où trouver chaque manifest. Lu par le JS au chargement de la page.
 
 ```json
 {
+  "servers": [
+    { "id": "inrae", "label": "INRAE", "description": "Serveur INRAE (institutionnel)", "endpoint": "iot.pclim.net:8080" },
+    { "id": "test",  "label": "Test",  "description": "Serveur de test (perso)",        "endpoint": "superviseur.furgo.fr:8080" }
+  ],
   "trames": [
     { "id": "v1",     "label": "V1",     "description": "Node basique (4 NTC)" },
     { "id": "v1ntc",  "label": "V1NTC",  "description": "V1 + 12 NTC supplémentaires" },
@@ -92,12 +99,13 @@ Décrit la matrice **trames × radios × versions** et où trouver chaque manife
       "date": "2026-05-14",
       "notes": "Texte affiché sous le sélecteur version.",
       "builds": {
-        "v1ntc-gsm": {
+        "inrae-v1ntc-gsm": {
           "available": true,
-          "manifestUpdate":  "manifests/v3.8.0-v1ntc-gsm-update.json",
-          "manifestFactory": "manifests/v3.8.0-v1ntc-gsm-factory.json"
+          "manifestUpdate":  "manifests/v3.8.0-inrae-v1ntc-gsm-update.json",
+          "manifestFactory": "manifests/v3.8.0-inrae-v1ntc-gsm-factory.json"
         },
-        "v1ntc-lora": { "available": false },
+        "test-v1ntc-gsm":  { "available": true, ... },
+        "inrae-v1ntc-lora": { "available": false },
         ...
       }
     }
@@ -106,13 +114,17 @@ Décrit la matrice **trames × radios × versions** et où trouver chaque manife
 ```
 
 **Règles** :
+- `servers[]` : dimension la plus critique. Conditionne où le device envoie ses données. **Aucun défaut** côté UI : l'utilisateur DOIT cliquer activement sur un serveur (overlay flou bloquant tant qu'aucun choix n'est fait).
 - `versions[]` est trié côté JS par semver descendant (3.10.0 > 3.9.0 > 3.8.0 > 3.8.0-rc1)
-- La clé de chaque build est `<trameId>-<radioId>` (ex: `v1ntc-lora-gsm`)
+- La clé de chaque build est `<serverId>-<trameId>-<radioId>` (ex: `inrae-v1ntc-lora-gsm`)
 - Si `available: false`, l'UI affiche la combo comme indisponible et désactive les boutons
+- 2 serveurs × 3 trames × 3 radios = **18 builds par version**
 
-### `manifests/v<X.Y.Z>-<trame>-<radio>-<mode>.json` — manifest ESP Web Tools
+### `manifests/v<X.Y.Z>-<server>-<trame>-<radio>-<mode>.json` — manifest ESP Web Tools
 
-Format défini par [ESP Web Tools](https://esphome.github.io/esp-web-tools/#manifest). Un manifest par combinaison **(version, trame, radio, mode)**.
+Format défini par [ESP Web Tools](https://esphome.github.io/esp-web-tools/#manifest). Un manifest par combinaison **(version, serveur, trame, radio, mode)**.
+
+Le `server` (INRAE / Test) reflète si `SERV_INRAE` est défini ou non dans `Conf.h` au moment de la compilation, ce qui détermine l'URL du serveur destinataire dans le firmware.
 
 ```json
 {
@@ -140,7 +152,7 @@ Format défini par [ESP Web Tools](https://esphome.github.io/esp-web-tools/#mani
 
 Avec `new_install_prompt_erase: true`, ESP Web Tools appelle `esploader.eraseFlash()` (chip erase complet 8 MB) **avant** d'écrire le binaire. Avec `false`, seuls les secteurs où on écrit sont effacés — la NVS (`0x9000`-`0xE000`) survit donc les clés LoRaWAN sont préservées.
 
-### `firmware/v<X.Y.Z>-<trame>-<radio>-full.bin` — image complète
+### `firmware/v<X.Y.Z>-<server>-<trame>-<radio>-full.bin` — image complète
 
 Image **merged** générée par `esptool merge_bin` qui concatène à leurs bons offsets :
 
@@ -167,7 +179,7 @@ esptool.py --chip esp32s3 merge_bin \
   0x10000  firmware.bin
 ```
 
-### `firmware/v<X.Y.Z>-<trame>-<radio>-app.bin` — application seule
+### `firmware/v<X.Y.Z>-<server>-<trame>-<radio>-app.bin` — application seule
 
 Copie directe du `firmware.bin` produit par PlatformIO (~600 KB). **Pas utilisé** par les manifests actuels (qui pointent tous vers `-full.bin` à offset 0), mais conservé pour usage futur (OTA, mise à jour via downlink LoRaWAN, etc.).
 
