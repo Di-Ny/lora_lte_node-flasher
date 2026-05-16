@@ -277,6 +277,41 @@ git add . && git commit -m "Add v3.9.0-v1ntc-gsm" && git push
 
 ---
 
+## Versioning du flasher (compteur `Flasher #N`)
+
+Le numéro `Flasher #N` affiché en bas de page identifie la version de l'**outil de flashage** (UI + scripts), indépendante de la version du firmware sélectionné dans le dropdown.
+
+Il est **auto-bumpé à chaque `git push`** via un git hook `pre-push` situé dans `scripts/git-hooks/pre-push`. Le hook :
+1. Lit `.flasher-version`, incrémente
+2. Met à jour le tag dans `index.html` avec le nouveau numéro, la date et le SHA court de HEAD
+3. Crée un commit `Bump Flasher #X -> #Y` automatiquement avant le push
+
+### Installation du hook (à faire une fois par clone)
+
+Les hooks Git ne sont pas synchronisés via GitHub (ils sont dans `.git/hooks/` qui est local). Pour activer le hook fourni dans ce repo :
+
+```bash
+git config core.hooksPath scripts/git-hooks
+```
+
+Sur Windows / WSL, vérifier que le fichier reste exécutable :
+```bash
+chmod +x scripts/git-hooks/pre-push
+```
+
+### Désactiver temporairement
+
+Pour pousser sans bumper (ex: doc-only fix) :
+```bash
+git push --no-verify
+```
+
+### Si tu forke ce repo
+
+Pense à activer le hook (commande ci-dessus) sinon ton numéro `Flasher #N` ne montera plus quand tu pousseras tes propres modifications.
+
+---
+
 ## Limitations connues
 
 - **Pas de Firefox / Safari** : Web Serial est Chromium-only en 2026

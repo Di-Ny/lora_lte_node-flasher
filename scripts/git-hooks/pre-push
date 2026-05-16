@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+#
+# pre-push hook : auto-bump du compteur 'Flasher #N' avant chaque push.
+#
+# Ce hook est execute par git juste avant le push effectif. Il :
+#   1. Lit .flasher-version, incremente +1
+#   2. Met a jour le tag <!-- BUILD_TAG_START -->...<!-- BUILD_TAG_END --> dans index.html
+#      avec le nouveau numero, la date courante et le SHA court de HEAD
+#   3. Cree un nouveau commit "Bump Flasher #X -> #Y" qui sera inclus dans le push
+#
+# Installation (a faire une fois par clone) :
+#   git config core.hooksPath scripts/git-hooks
+#
+# Pour le desactiver temporairement (push sans bump) :
+#   git push --no-verify
+#
+# Comportement special :
+#   - Si on est sur une branche != main, on previent mais on bump quand meme
+#   - Si .flasher-version n'existe pas, on l'initialise a 1
+#   - Si le tag BUILD_TAG_START/END n'est pas trouve dans index.html, on previent
+#     mais on continue (le compteur reste a jour dans .flasher-version)
+
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+VERSION_FILE="$REPO_ROOT/.flasher-version"
+INDEX_HTML="$REPO_ROOT/index.html"
+
+# 0. Si pas de changement en attente de push, ne rien faire
+#    (cas : git push sur une branche deja a jour)
+if git diff --quiet "@{push}" 2>/dev/null; then
+    : # rien a faire mais on ne sort pas, le push echouera de toute facon
+fi
+
+# Eviter le double-bump : si le dernier commit est deja un bump auto, skip
+last_msg=$(git log -1 --pretty=%s 2>/dev/null || echo "")
+if [[ "$last_msg" =~ ^Bump\ Flasher ]]; then
+    echo "[pre-push] dernier commit est deja un bump, skip."
+    exit 0
+fi
+
+# 1. Bump du compteur
+current=0
+if [[ -f "$VERSION_FILE" ]]; then
+    current=$(cat "$VERSION_FILE" | tr -d '[:space:]')
+    if ! [[ "$current" =~ ^[0-9]+$ ]]; then
+        current=0
+    fi
+fi
+next=$((current + 1))
+echo "$next" > "$VERSION_FILE"
+
+# 2. Maj du tag dans index.html
+if [[ -f "$INDEX_HTML" ]] && grep -q "BUILD_TAG_START" "$INDEX_HTML"; then
+    timestamp=$(date +"%Y-%m-%d %H:%M")
+    short_sha=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+    tag_text="Flasher #${next} - ${timestamp} (${short_sha})"
+    new_block="<!-- BUILD_TAG_START -->
+          <span style=\"font-family:ui-monospace,monospace;font-size:0.75rem;opacity:0.65;\">${tag_text}</span>
+          <!-- BUILD_TAG_END -->"
+    perl -i -0pe "s|<!-- BUILD_TAG_START -->.*?<!-- BUILD_TAG_END -->|${new_block}|s" "$INDEX_HTML"
+else
+    echo "[pre-push] WARN : BUILD_TAG markers introuvables dans index.html, le tag visuel ne sera pas mis a jour."
+fi
+
+# 3. Commit du bump
+git add "$VERSION_FILE" "$INDEX_HTML" 2>/dev/null || true
+if ! git diff --cached --quiet; then
+    git commit -m "Bump Flasher #${current} -> #${next}" --no-verify > /dev/null
+    echo "[pre-push] Flasher #${current} -> #${next} (commit ajoute au push)"
+else
+    echo "[pre-push] aucun changement a commiter (deja a jour ?)"
+fi
+
+exit 0
