@@ -1,17 +1,7 @@
 {
   "servers": [
-    {
-      "id": "inrae",
-      "label": "INRAE",
-      "description": "Serveur INRAE (institutionnel)",
-      "endpoint": "iot.pclim.net:8080"
-    },
-    {
-      "id": "test",
-      "label": "Test",
-      "description": "Serveur de test (perso)",
-      "endpoint": "superviseur.furgo.fr:8080"
-    }
+    { "id": "inrae", "label": "INRAE", "description": "Serveur INRAE (institutionnel)" },
+    { "id": "test",  "label": "Test",  "description": "Serveur de test (perso)" }
   ],
   "trames": [
     { "id": "v1",     "label": "V1",     "description": "Node basique (4 NTC)" },

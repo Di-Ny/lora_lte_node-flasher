@@ -1167,8 +1167,7 @@
         card.className = "server-card" + (srv.id === state.currentServer ? " selected" : "");
         card.innerHTML = `
           <p class="server-name">${srv.label}</p>
-          <p class="server-desc">${srv.description || ""}</p>
-          <p class="server-endpoint">${srv.endpoint || ""}</p>`;
+          <p class="server-desc">${srv.description || ""}</p>`;
         card.addEventListener("click", () => {
           state.currentServer = srv.id;
           // Re-init trame & radio par defaut en fonction du serveur choisi
@@ -1188,7 +1187,7 @@
         serverSection.classList.add("chosen");
         const chosen = servers.find(s => s.id === state.currentServer);
         warningIcon.textContent = "✓";
-        warningText.innerHTML = `Serveur sélectionné : <strong>${chosen.label}</strong> (${chosen.endpoint || ""})`;
+        warningText.innerHTML = `Serveur sélectionné : <strong>${chosen.label}</strong>`;
       } else {
         lockedZone.classList.add("locked");
         serverSection.classList.remove("chosen");

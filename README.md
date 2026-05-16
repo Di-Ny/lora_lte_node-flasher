@@ -21,7 +21,7 @@ Aucune installation requise — tout s'exécute dans le navigateur via [ESP Web 
 | 7 | Confirmer l'erase (si Flash usine), confirmer le port → flash lance |
 | 8 | À la fin, le terminal série reprend automatiquement le log du device |
 
-**Pourquoi le choix de serveur est critique** : le firmware envoie ses données vers un serveur HTTP (INRAE = `iot.pclim.net`, Test = `superviseur.furgo.fr`). Un mauvais choix au moment du flash envoie les données du device chez le mauvais destinataire — d'où le verrouillage de la page.
+**Pourquoi le choix de serveur est critique** : chaque option correspond à une URL de serveur HTTP différente, compilée en dur dans le firmware. Un mauvais choix au moment du flash envoie les données du device chez le mauvais destinataire — d'où le verrouillage de la page tant que le choix n'est pas fait explicitement.
 
 Firefox et Safari ne sont **pas** supportés (Web Serial est Chromium-only).
 
@@ -81,8 +81,8 @@ Décrit la matrice **serveurs × trames × radios × versions** et où trouver c
 ```json
 {
   "servers": [
-    { "id": "inrae", "label": "INRAE", "description": "Serveur INRAE (institutionnel)", "endpoint": "iot.pclim.net:8080" },
-    { "id": "test",  "label": "Test",  "description": "Serveur de test (perso)",        "endpoint": "superviseur.furgo.fr:8080" }
+    { "id": "inrae", "label": "INRAE", "description": "Serveur INRAE (institutionnel)" },
+    { "id": "test",  "label": "Test",  "description": "Serveur de test (perso)" }
   ],
   "trames": [
     { "id": "v1",     "label": "V1",     "description": "Node basique (4 NTC)" },
