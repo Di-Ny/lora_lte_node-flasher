@@ -1256,7 +1256,7 @@
       if (!data.versions || data.versions.length === 0) {
         document.getElementById("section-version").innerHTML =
           `<h3 class="section-label">Version du firmware</h3>
-           <div class="browser-warn show">Aucune version disponible pour l'instant. Lancez <code>build_release.ps1</code> ou <code>build_release.sh</code> pour publier une release.</div>`;
+           <div class="browser-warn show">Aucune version disponible</div>`;
         // On rend juste les server cards (overlay reste verrouille de toute facon)
         renderServerCards();
         return;
