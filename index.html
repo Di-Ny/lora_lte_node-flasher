@@ -448,6 +448,18 @@
       background: var(--danger-soft);
       border-color: var(--danger);
     }
+    /* Bouton download : tertiaire, plus discret, prend toute la 2e ligne */
+    .action-btn.download {
+      border-left: 3px solid var(--muted);
+      color: var(--muted);
+      text-decoration: none;
+      grid-column: 1 / -1;  /* etend sur les 2 colonnes du grid .actions */
+    }
+    .action-btn.download:hover {
+      background: #f6f8fa;
+      border-color: var(--text);
+      color: var(--text);
+    }
     .action-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
@@ -1114,6 +1126,19 @@
         facWrap.appendChild(facBtn);
         attachFlashListeners(facWrap, "factory");
         actions.appendChild(facWrap);
+
+        // Download button : lien direct vers le .bin (image full)
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "action-btn download";
+        dlBtn.href = `firmware/${id}-full.bin`;
+        dlBtn.setAttribute("download", `${id}-full.bin`);
+        dlBtn.innerHTML = `
+          <span>⬇</span>
+          <span class="action-main">
+            <span>Télécharger .bin</span>
+            <span class="action-sub">Image complète pour flash manuel</span>
+          </span>`;
+        actions.appendChild(dlBtn);
 
       } else {
         summary.className = "build-summary ko";
