@@ -196,12 +196,13 @@
     }
 
     /* Locked sections (everything below "Server" until a server is chosen) */
+    /* Lisible mais clairement inactif : leger voile + desaturation, pas de flou fort */
     .locked-zone {
       position: relative;
     }
     .locked-zone.locked > * {
-      filter: blur(3px);
-      opacity: 0.5;
+      filter: grayscale(70%);
+      opacity: 0.65;
       pointer-events: none;
       user-select: none;
     }
@@ -212,8 +213,7 @@
       display: flex;
       position: absolute;
       inset: 0;
-      background: rgba(246, 248, 250, 0.4);
-      backdrop-filter: blur(2px);
+      background: rgba(246, 248, 250, 0.15);
       align-items: flex-start;
       justify-content: center;
       padding-top: 4rem;
