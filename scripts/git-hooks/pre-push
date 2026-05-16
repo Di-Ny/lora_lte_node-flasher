@@ -48,9 +48,24 @@ fi
 
 if [[ -z "$remote_ref" ]]; then
     # Premier push d'une nouvelle branche : on prend tous les commits
-    changed_files=$(git diff --name-only $(git rev-list --max-parents=0 HEAD) HEAD)
+    base_ref=$(git rev-list --max-parents=0 HEAD)
 else
-    changed_files=$(git diff --name-only "$remote_ref" HEAD)
+    base_ref="$remote_ref"
+fi
+
+# IMPORTANT : on exclut les commits "Bump Flasher #N -> #M" du calcul des
+# fichiers modifies. Ces commits sont generes par ce hook lui-meme et ne
+# refletent pas une vraie evolution de l'outil. Si la seule difference entre
+# base_ref et HEAD est compose de commits release + commits Bump, on ne doit
+# PAS bumper a nouveau.
+non_bump_commits=$(git log --format='%H %s' "$base_ref..HEAD" | grep -v '^[0-9a-f]\+ Bump Flasher' | awk '{print $1}')
+
+if [[ -z "$non_bump_commits" ]]; then
+    # Tous les commits a pusher sont des "Bump" : rien a faire
+    changed_files=""
+else
+    # On regarde les fichiers modifies par les commits NON-Bump uniquement
+    changed_files=$(echo "$non_bump_commits" | xargs -I {} git diff-tree --no-commit-id --name-only -r {} 2>/dev/null | sort -u)
 fi
 
 if [[ -z "$changed_files" ]]; then
