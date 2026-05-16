@@ -196,52 +196,17 @@
     }
 
     /* Locked sections (everything below "Server" until a server is chosen) */
-    /* Lisible mais clairement inactif : leger voile + desaturation, pas de flou fort */
-    .locked-zone {
-      position: relative;
-    }
+    /* Pas d'overlay - juste desaturation + opacite pour signaler l'inactivite.
+       L'avertissement contextuel est dans la section Serveur au-dessus. */
     .locked-zone.locked > * {
       filter: grayscale(70%);
-      opacity: 0.65;
+      opacity: 0.6;
       pointer-events: none;
       user-select: none;
+      transition: filter 0.25s ease, opacity 0.25s ease;
     }
-    .locked-zone .lock-overlay {
-      display: none;
-    }
-    .locked-zone.locked .lock-overlay {
-      display: flex;
-      position: absolute;
-      inset: 0;
-      background: rgba(246, 248, 250, 0.15);
-      align-items: flex-start;
-      justify-content: center;
-      padding-top: 4rem;
-      z-index: 10;
-      pointer-events: auto;
-    }
-    .locked-zone.locked .lock-overlay .lock-msg {
-      background: white;
-      border: 1px solid var(--warn-border);
-      border-radius: 8px;
-      padding: 1rem 1.5rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      text-align: center;
-      max-width: 420px;
-    }
-    .locked-zone.locked .lock-overlay .lock-icon {
-      font-size: 1.8rem;
-      margin-bottom: 0.3rem;
-    }
-    .locked-zone.locked .lock-overlay .lock-title {
-      font-weight: 600;
-      color: var(--warn-text);
-      margin: 0 0 0.3rem;
-    }
-    .locked-zone.locked .lock-overlay .lock-detail {
-      color: var(--muted);
-      font-size: 0.88rem;
-      margin: 0;
+    .locked-zone > * {
+      transition: filter 0.25s ease, opacity 0.25s ease;
     }
 
     /* ----------- Grid 2 cols ---------- */
@@ -634,15 +599,9 @@
           <div class="server-cards" id="server-cards"></div>
         </div>
 
-        <!-- TOUT EN DESSOUS EST VERROUILLE TANT QU AUCUN SERVEUR N EST CHOISI -->
+        <!-- TOUT EN DESSOUS EST DESATURE TANT QU AUCUN SERVEUR N EST CHOISI -->
+        <!-- (l'avertissement explicite est dans la section Serveur ci-dessus) -->
         <div class="locked-zone locked" id="locked-zone">
-          <div class="lock-overlay">
-            <div class="lock-msg">
-              <div class="lock-icon">🔒</div>
-              <p class="lock-title">Sélectionnez d'abord un serveur</p>
-              <p class="lock-detail">Le choix du serveur conditionne l'ensemble des builds disponibles. Cliquez sur INRAE ou Test au-dessus.</p>
-            </div>
-          </div>
 
           <!-- VERSION -->
           <div class="section" id="section-version">
