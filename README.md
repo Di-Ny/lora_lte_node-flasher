@@ -66,7 +66,8 @@ lora_lte_node-flasher/
 │   └── ...
 ├── .flasher-version        # Compteur auto-incrémenté du flasher (UI)
 ├── README.md               # ce fichier
-└── LICENSE                 # MIT
+├── LICENSE                 # GNU AGPL v3
+└── NOTICE                  # Attributions des dépendances tierces
 ```
 
 ---
@@ -287,4 +288,12 @@ git add . && git commit -m "Add v3.9.0-v1ntc-gsm" && git push
 
 ## Licence
 
-[MIT](LICENSE) — © 2026 Nicolas Dauy
+Ce projet est distribué sous la licence **[GNU Affero General Public License v3.0](LICENSE)** — © 2026 [Di-Ny](https://github.com/Di-Ny).
+
+Choix AGPLv3 :
+- **Libre** : copie, modification, redistribution autorisées
+- **Copyleft fort** : tout fork ou dérivé doit rester sous AGPLv3 et publier ses sources
+- **Clause réseau** : si vous hébergez une version modifiée accessible via le réseau, vous devez fournir les sources aux utilisateurs (différence clé avec GPLv3)
+- **Attribution obligatoire** : la mention du copyright et de la licence doit être conservée
+
+Pour les attributions des dépendances tierces (ESP Web Tools, etc.), voir [NOTICE](NOTICE).

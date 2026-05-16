@@ -1,0 +1,38 @@
+LoRa-LTE Node — Web Flasher
+Copyright (C) 2026 Di-Ny <https://github.com/Di-Ny>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License version 3,
+as published by the Free Software Foundation.
+
+See the LICENSE file for the full text of the license.
+
+================================================================
+Third-party software loaded by this application
+================================================================
+
+ESP Web Tools
+  URL       : https://github.com/esphome/esp-web-tools
+  License   : Apache License 2.0
+  Usage     : Loaded dynamically by the user's browser from unpkg.com CDN
+              (https://unpkg.com/esp-web-tools@10/dist/web/install-button.js).
+              Not bundled, not modified, no source code embedded in this repo.
+  Copyright : Copyright the ESP Web Tools authors and contributors.
+
+  The Apache 2.0 license is available at :
+  https://www.apache.org/licenses/LICENSE-2.0
+
+================================================================
+Note about the firmware binaries (firmware/*.bin)
+================================================================
+
+The binary firmware images distributed in this repository are compiled
+from a separate source repository (private). These binaries statically
+link against several open-source libraries (Arduino-ESP32, RadioLib,
+ArduinoJson, Adafruit sensor drivers, etc.), each with their own license.
+
+The binaries are provided here for convenience of users wishing to flash
+the LoRa-LTE Node hardware. Attributions and source code for the embedded
+libraries are available through their respective upstream projects.
+
+================================================================
