@@ -281,10 +281,15 @@ git add . && git commit -m "Add v3.9.0-v1ntc-gsm" && git push
 
 Le numéro `Flasher #N` affiché en bas de page identifie la version de l'**outil de flashage** (UI + scripts), indépendante de la version du firmware sélectionné dans le dropdown.
 
-Il est **auto-bumpé à chaque `git push`** via un git hook `pre-push` situé dans `scripts/git-hooks/pre-push`. Le hook :
-1. Lit `.flasher-version`, incrémente
-2. Met à jour le tag dans `index.html` avec le nouveau numéro, la date et le SHA court de HEAD
-3. Crée un commit `Bump Flasher #X -> #Y` automatiquement avant le push
+Il est **auto-bumpé à chaque `git push` qui modifie l'outil**, via un git hook `pre-push` situé dans `scripts/git-hooks/pre-push`. Le hook :
+1. Analyse les fichiers modifiés par les commits à pusher
+2. **Si tous les changements sont dans `firmware/`, `manifests/` ou `builds.json`** → c'est une release firmware → **pas de bump**
+3. **Sinon** (modif de `index.html`, `README.md`, `scripts/`, etc.) → bump :
+   - Incrémente `.flasher-version`
+   - Met à jour le tag dans `index.html` avec le nouveau numéro, la date et le SHA court de HEAD
+   - Crée un commit `Bump Flasher #X -> #Y` ajouté au push
+
+Conséquence : tu peux publier 10 releases firmware d'affilée sans toucher au compteur. Le `Flasher #N` ne monte que quand toi tu modifies l'outil lui-même (UI, doc, scripts, schéma de `builds.json`).
 
 ### Installation du hook (à faire une fois par clone)
 
