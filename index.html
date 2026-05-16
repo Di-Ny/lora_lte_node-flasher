@@ -1224,6 +1224,9 @@
 
     function render() {
       renderServerCards();
+      // Si pas de version disponible (catalogue vide), on s'arrete apres les cards serveur.
+      // Le deblur a deja ete fait dans renderServerCards si un serveur est selectionne.
+      if (!state.currentVersion) return;
       renderVersion();
       renderModeCards();
       renderOptions();
