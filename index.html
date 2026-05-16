@@ -1199,6 +1199,8 @@
     // Quand on (re)choisit un serveur, on selectionne la 1re combo dispo
     function pickDefaultsForCurrentServer() {
       if (!state.currentServer) return;
+      // Cas catalogue vide (aucune version publiee) : rien a presetter
+      if (!state.currentVersion || !state.currentVersion.builds) return;
       const prefix = state.currentServer + "-";
       // Trouve une trame qui a au moins une combo dispo pour ce serveur
       const trameWithBuild = state.data.trames.find(t =>
