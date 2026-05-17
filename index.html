@@ -18,6 +18,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0969da" />
+  <link rel="manifest" href="manifest.webmanifest" />
   <title>LoRa-LTE Node — Flasher en ligne</title>
   <script
     type="module"
@@ -233,6 +235,65 @@
       font-size: 0.88rem;
     }
     .browser-warn.show { display: block; }
+
+    /* ----------- Banniere precache offline ---------- */
+    .offline-banner {
+      background: var(--accent-soft);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      padding: 0.7rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      color: var(--accent);
+    }
+    .offline-banner.done {
+      background: var(--ok-bg);
+      border-color: var(--ok);
+      color: var(--ok);
+    }
+    .offline-banner.error {
+      background: var(--warn-bg);
+      border-color: var(--warn-border);
+      color: var(--warn-text);
+    }
+    .offline-banner-inner {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+    .offline-icon {
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    .offline-text { flex: 1; min-width: 0; }
+    .offline-title { font-weight: 600; }
+    .offline-detail { font-size: 0.82rem; opacity: 0.85; margin-top: 0.1rem; }
+    .offline-progress-bar {
+      height: 4px;
+      background: rgba(0,0,0,0.08);
+      border-radius: 2px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+    .offline-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: currentColor;
+      transition: width 0.25s ease;
+    }
+    .offline-banner.done .offline-progress-bar,
+    .offline-banner.error .offline-progress-bar { display: none; }
+    .offline-close {
+      background: transparent;
+      border: none;
+      color: inherit;
+      font-size: 1.4rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 0.3rem;
+      opacity: 0.6;
+    }
+    .offline-close:hover { opacity: 1; }
 
     /* ----------- Section ---------- */
     .section {
@@ -574,6 +635,19 @@
 </head>
 <body>
   <div class="app">
+
+    <!-- ====== Banniere de pre-cache offline ====== -->
+    <div class="offline-banner" id="offline-banner" style="display:none">
+      <div class="offline-banner-inner">
+        <span class="offline-icon" id="offline-icon">⬇</span>
+        <div class="offline-text">
+          <div class="offline-title" id="offline-title">Préparation du mode offline…</div>
+          <div class="offline-detail" id="offline-detail">Téléchargement des firmwares pour usage sans internet</div>
+          <div class="offline-progress-bar"><div class="offline-progress-fill" id="offline-progress-fill"></div></div>
+        </div>
+        <button class="offline-close" id="offline-close" title="Masquer" style="display:none">×</button>
+      </div>
+    </div>
 
     <!-- ====== HEADER ====== -->
     <div class="header-bar">
@@ -1304,6 +1378,79 @@
     }
 
     init();
+  })();
+  </script>
+
+  <!-- Service Worker pour mode offline -->
+  <script>
+  (() => {
+    "use strict";
+    if (!("serviceWorker" in navigator)) return;  // navigateur trop vieux
+
+    const banner   = document.getElementById("offline-banner");
+    const titleEl  = document.getElementById("offline-title");
+    const detailEl = document.getElementById("offline-detail");
+    const iconEl   = document.getElementById("offline-icon");
+    const fillEl   = document.getElementById("offline-progress-fill");
+    const closeEl  = document.getElementById("offline-close");
+
+    function setProgress(done, total) {
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+      fillEl.style.width = pct + "%";
+    }
+    function showBanner() { banner.style.display = ""; }
+    function setStatus(state, title, detail) {
+      banner.classList.remove("done", "error");
+      if (state) banner.classList.add(state);
+      titleEl.textContent = title;
+      detailEl.textContent = detail || "";
+      if (state === "done") iconEl.textContent = "✓";
+      else if (state === "error") iconEl.textContent = "⚠️";
+      else iconEl.textContent = "⬇";
+    }
+    closeEl.addEventListener("click", () => { banner.style.display = "none"; });
+
+    // Ecoute les messages du SW (progression du precache)
+    navigator.serviceWorker.addEventListener("message", (ev) => {
+      const m = ev.data || {};
+      if (m.type === "PRECACHE_START") {
+        showBanner();
+        setStatus(null, "Préparation du mode offline…", `0 / ${m.total} fichiers`);
+        setProgress(0, m.total);
+      } else if (m.type === "PRECACHE_PROGRESS") {
+        setStatus(null, "Préparation du mode offline…", `${m.done} / ${m.total} fichiers`);
+        setProgress(m.done, m.total);
+      } else if (m.type === "PRECACHE_DONE") {
+        const detail = m.downloaded === 0
+          ? `${m.total} fichiers déjà en cache — flasher utilisable hors-ligne.`
+          : `${m.downloaded} nouveaux fichiers téléchargés (${m.skipped} déjà en cache). Flasher utilisable hors-ligne.`;
+        setStatus("done", "✓ Mode offline prêt", detail);
+        setProgress(1, 1);
+        closeEl.style.display = "";
+        // Auto-masque apres 8s
+        setTimeout(() => { banner.style.display = "none"; }, 8000);
+      } else if (m.type === "PRECACHE_ERROR") {
+        setStatus("error", "Pré-cache offline interrompu", m.message);
+        closeEl.style.display = "";
+      }
+    });
+
+    // Enregistre le SW puis declenche le precache des firmwares
+    window.addEventListener("load", async () => {
+      try {
+        const reg = await navigator.serviceWorker.register("sw.js");
+        // Attend que le SW soit actif et prenne le controle de cette page
+        if (!navigator.serviceWorker.controller) {
+          await new Promise(resolve => {
+            navigator.serviceWorker.addEventListener("controllerchange", resolve, { once: true });
+          });
+        }
+        // Demande le pre-cache des firmwares
+        navigator.serviceWorker.controller.postMessage({ type: "PRECACHE_FIRMWARES" });
+      } catch (e) {
+        console.warn("[SW] Registration failed:", e);
+      }
+    });
   })();
   </script>
 </body>

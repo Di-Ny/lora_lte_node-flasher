@@ -1,0 +1,11 @@
+{
+  "name": "LoRa-LTE Node Flasher",
+  "short_name": "LoRa Flasher",
+  "description": "Outil de flashage en ligne et offline pour les nodes LoRa-LTE (Heltec Wireless Stick Lite V3).",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f8fa",
+  "theme_color": "#0969da",
+  "icons": []
+}

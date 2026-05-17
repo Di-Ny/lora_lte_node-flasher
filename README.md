@@ -277,6 +277,52 @@ git add . && git commit -m "Add v3.9.0-v1ntc-gsm" && git push
 
 ---
 
+## Mode offline (cache local)
+
+Le flasher est une **Progressive Web App** (PWA) : une fois la page chargée avec internet, **tous les firmwares sont téléchargés et mis en cache localement**. Le terrain sans connexion devient possible.
+
+### Premier chargement
+
+À la première visite (en ligne) :
+1. La page se charge normalement
+2. Le service worker s'enregistre en arrière-plan
+3. Une bannière bleue apparaît : `Préparation du mode offline… 0 / 36 fichiers`
+4. Tous les `.bin` + manifests de toutes les versions sont téléchargés et stockés dans le cache navigateur (~13 MB par version)
+5. Bannière verte : `✓ Mode offline prêt` (auto-masquée après 8 s)
+
+### Utilisation hors-ligne
+
+Une fois le pré-cache fait :
+- Tu peux ouvrir [https://di-ny.github.io/lora_lte_node-flasher/](https://di-ny.github.io/lora_lte_node-flasher/) **sans internet**
+- Tous les firmwares déjà cachés sont flashables normalement
+- Si tu sélectionnes une version qui n'a jamais été cachée → message d'erreur réseau
+
+### Mise à jour du cache
+
+Quand tu reviens en ligne :
+- `index.html` et `builds.json` sont re-fetchés en priorité (network-first) → tu vois les nouvelles versions
+- Si de nouvelles versions sont publiées, le SW pré-cache automatiquement les nouveaux fichiers
+- Les anciennes versions cachées restent disponibles (pas de nettoyage agressif)
+
+### Stratégie de cache (détails techniques)
+
+| Type de fichier | Stratégie | Justification |
+|---|---|---|
+| `index.html`, `builds.json`, `manifest.webmanifest` | network-first | Permet de voir les évolutions de l'outil et les nouvelles releases |
+| `firmware/*.bin` | cache-first | Immuables — un `.bin` publié ne change jamais |
+| `manifests/v*.json` | cache-first | Immuables, générés par release |
+| `unpkg.com/esp-web-tools/*` | cache-first | URL versionnée par hash |
+
+Le service worker est dans [sw.js](sw.js).
+
+### Limitations connues
+
+- **Premier visit doit être online** : sans connexion lors du tout premier chargement, le SW ne peut pas se télécharger
+- **HTTPS obligatoire** : les service workers ne fonctionnent qu'en HTTPS (sauf `localhost`). GitHub Pages fournit HTTPS d'office, donc OK.
+- **Stockage navigateur** : ~15-20 MB par version × N versions cachées. Chrome/Edge autorisent généralement plusieurs GB par site, pas de souci.
+
+---
+
 ## Versioning du flasher (compteur `Flasher #N`)
 
 Le numéro `Flasher #N` affiché en bas de page identifie la version de l'**outil de flashage** (UI + scripts), indépendante de la version du firmware sélectionné dans le dropdown.
