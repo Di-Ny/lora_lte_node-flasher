@@ -641,8 +641,8 @@
       <div class="offline-banner-inner">
         <span class="offline-icon" id="offline-icon">⬇</span>
         <div class="offline-text">
-          <div class="offline-title" id="offline-title">Préparation du mode offline…</div>
-          <div class="offline-detail" id="offline-detail">Téléchargement des firmwares pour usage sans internet</div>
+          <div class="offline-title" id="offline-title">Mise en cache des fichiers…</div>
+          <div class="offline-detail" id="offline-detail">Pour utilisation hors-ligne</div>
           <div class="offline-progress-bar"><div class="offline-progress-fill" id="offline-progress-fill"></div></div>
         </div>
         <button class="offline-close" id="offline-close" title="Masquer" style="display:none">×</button>
@@ -1201,17 +1201,48 @@
         attachFlashListeners(facWrap, "factory");
         actions.appendChild(facWrap);
 
-        // Download button : lien direct vers le .bin (image full)
-        const dlBtn = document.createElement("a");
+        // Download button : on passe par fetch + Blob plutot qu'un lien <a> direct
+        // pour 2 raisons :
+        //   1. Avec le service worker, un lien direct peut etre intercepte de maniere
+        //      surprenante (l'attribut 'download' n'est pas toujours respecte sur les
+        //      reponses servies par le SW)
+        //   2. Permet d'attendre que le fichier soit pret avant de proposer le download
+        //      (utile si le pre-cache est encore en cours)
+        const dlBtn = document.createElement("button");
         dlBtn.className = "action-btn download";
-        dlBtn.href = `firmware/${id}-full.bin`;
-        dlBtn.setAttribute("download", `${id}-full.bin`);
+        dlBtn.type = "button";
+        const dlUrl = `firmware/${id}-full.bin`;
+        const dlName = `${id}-full.bin`;
         dlBtn.innerHTML = `
           <span>⬇</span>
           <span class="action-main">
             <span>Télécharger .bin</span>
             <span class="action-sub">Image complète pour flash manuel</span>
           </span>`;
+        dlBtn.addEventListener("click", async () => {
+          const orig = dlBtn.innerHTML;
+          dlBtn.disabled = true;
+          dlBtn.innerHTML = `<span>⏳</span><span class="action-main"><span>Téléchargement…</span><span class="action-sub">${dlName}</span></span>`;
+          try {
+            const resp = await fetch(dlUrl);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const blob = await resp.blob();
+            const obj = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = obj;
+            a.download = dlName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            // Libere la memoire apres 1s (delai pour que le browser declenche le save)
+            setTimeout(() => URL.revokeObjectURL(obj), 1000);
+          } catch (e) {
+            alert(`Echec du téléchargement : ${e.message}`);
+          } finally {
+            dlBtn.disabled = false;
+            dlBtn.innerHTML = orig;
+          }
+        });
         actions.appendChild(dlBtn);
 
       } else {
@@ -1234,13 +1265,22 @@
     }
 
     function attachFlashListeners(wrapper, mode) {
-      // Intercepte le clic en phase capture : on libere le port AVANT qu'ESP Web Tools
-      // tente de l'ouvrir. C'est plus fiable que d'attendre ses events state-changed.
-      wrapper.addEventListener("click", async (ev) => {
+      // Intercepte le clic en phase capture pour liberer le port avant qu'ESP Web
+      // Tools n'ouvre le sien. On attache sur 2 cibles pour etre certains de capter :
+      //   - le wrapper <esp-web-install-button> lui-meme
+      //   - le bouton enfant (slot 'activate')
+      // Selon les versions d'ESP Web Tools, l'evenement peut ne pas bubbler jusqu'au
+      // wrapper (shadow DOM, etc.), donc la double-attache est une securite.
+      const releaseHandler = (ev) => {
         if (port.device && !port.flashing) {
-          await releasePortForFlash();
+          console.log("[flash] click intercepted, releasing port (target=" + ev.currentTarget.tagName + ")");
+          releasePortForFlash().catch(e => console.warn("[flash] release failed:", e));
         }
-      }, true);
+      };
+      wrapper.addEventListener("click", releaseHandler, true);
+      // Attache aussi sur le bouton-enfant des qu'il est dispo
+      const slotBtn = wrapper.querySelector("[slot='activate']");
+      if (slotBtn) slotBtn.addEventListener("click", releaseHandler, true);
 
       // Reprise du port apres flash via les events ESP Web Tools (compatibilite v10)
       const reclaimStates = new Set([
@@ -1415,22 +1455,19 @@
       const m = ev.data || {};
       if (m.type === "PRECACHE_START") {
         showBanner();
-        setStatus(null, "Préparation du mode offline…", `0 / ${m.total} fichiers`);
+        setStatus(null, "Mise en cache des fichiers…", "Pour utilisation hors-ligne");
         setProgress(0, m.total);
       } else if (m.type === "PRECACHE_PROGRESS") {
-        setStatus(null, "Préparation du mode offline…", `${m.done} / ${m.total} fichiers`);
+        setStatus(null, "Mise en cache des fichiers…", "Pour utilisation hors-ligne");
         setProgress(m.done, m.total);
       } else if (m.type === "PRECACHE_DONE") {
-        const detail = m.downloaded === 0
-          ? `${m.total} fichiers déjà en cache — flasher utilisable hors-ligne.`
-          : `${m.downloaded} nouveaux fichiers téléchargés (${m.skipped} déjà en cache). Flasher utilisable hors-ligne.`;
-        setStatus("done", "✓ Mode offline prêt", detail);
+        setStatus("done", "✓ Cache prêt", "Flasher utilisable hors-ligne");
         setProgress(1, 1);
         closeEl.style.display = "";
-        // Auto-masque apres 8s
-        setTimeout(() => { banner.style.display = "none"; }, 8000);
+        // Auto-masque apres 6s
+        setTimeout(() => { banner.style.display = "none"; }, 6000);
       } else if (m.type === "PRECACHE_ERROR") {
-        setStatus("error", "Pré-cache offline interrompu", m.message);
+        setStatus("error", "Mise en cache interrompue", m.message);
         closeEl.style.display = "";
       }
     });
