@@ -1026,7 +1026,17 @@
       currentTrame: null,
       gsm: true,
       lora: false,
+      ota: true,            // mise a jour OTA via GSM (variante "-noota" si false et disponible)
     };
+
+    // La version selectionnee propose-t-elle la variante sans OTA pour la combo courante ?
+    // (cle "<server>-<trame>-<radio>-noota" presente dans builds.json, a partir de la v3.10)
+    function otaVariantAvailable() {
+      if (!state.currentVersion || !state.currentServer || !state.gsm) return false;
+      const r = radioKey();
+      if (!r) return false;
+      return Object.prototype.hasOwnProperty.call(state.currentVersion.builds, `${state.currentServer}-${state.currentTrame}-${r}-noota`);
+    }
 
     function radioKey() {
       if (state.gsm && state.lora) return "lora-gsm";
@@ -1035,15 +1045,19 @@
       return null;
     }
     function radioLabel() {
-      if (state.gsm && state.lora) return "GSM + LoRa";
-      if (state.gsm) return "GSM seul";
-      if (state.lora) return "LoRa seul";
-      return "(aucune radio)";
+      let label;
+      if (state.gsm && state.lora) label = "GSM + LoRa";
+      else if (state.gsm) label = "GSM seul";
+      else if (state.lora) label = "LoRa seul";
+      else return "(aucune radio)";
+      if (otaVariantAvailable()) label += state.ota ? " · OTA GSM" : " · sans OTA";
+      return label;
     }
     function buildKey() {
       const r = radioKey();
       if (!r || !state.currentServer) return null;
-      return `${state.currentServer}-${state.currentTrame}-${r}`;
+      const base = `${state.currentServer}-${state.currentTrame}-${r}`;
+      return (otaVariantAvailable() && !state.ota) ? `${base}-noota` : base;
     }
     function buildId() {
       const k = buildKey();
@@ -1115,9 +1129,13 @@
       const root = document.getElementById("options-list");
       root.innerHTML = "";
       const options = [
-        { id: "gsm",  name: "GSM",  desc: "Modem cellulaire SIM7080G (LTE-M / NB-IoT)" },
-        { id: "lora", name: "LoRa", desc: "Radio LoRaWAN SX1262 (EU868)" },
+        { id: "gsm",  name: "GSM",  desc: "Modem cellulaire (SIM7000 / SIM7070 / A7670)" },
+        { id: "lora", name: "LoRa", desc: "Radio LoRaWAN SX1262 (EU868 / US915 / AU915 selon provisioning)" },
       ];
+      if (otaVariantAvailable()) {
+        options.push({ id: "ota", name: "Mise à jour OTA via GSM",
+          desc: "Le node accepte un nouveau firmware pousse par le serveur (attributs fw_* ThingsBoard) ou par AT+OTA. Desactive = variante « noota »." });
+      }
       for (const opt of options) {
         const isActive = state[opt.id];
         const row = document.createElement("div");
@@ -1136,8 +1154,8 @@
         const input = row.querySelector("input");
         input.addEventListener("change", (e) => {
           const wantOff = !e.target.checked;
-          // Si on essaye de tout désactiver, on l'en empêche
-          if (wantOff) {
+          // Si on essaye de tout désactiver (GSM et LoRa), on l'en empêche
+          if (wantOff && opt.id !== "ota") {
             const other = opt.id === "gsm" ? state.lora : state.gsm;
             if (!other) {
               e.target.checked = true;

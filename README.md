@@ -16,7 +16,7 @@ Aucune installation requise — tout s'exécute dans le navigateur via [ESP Web 
 | 2 | Ouvrir [https://di-ny.github.io/lora_lte_node-flasher/](https://di-ny.github.io/lora_lte_node-flasher/) sur **Chrome**, **Edge** ou **Opera** desktop |
 | 3 | **⚠️ Choisir le serveur destinataire en premier** (INRAE ou Test). Tant qu'aucun serveur n'est choisi, tout le reste de la page est verrouillé (overlay flou). |
 | 4 | Cliquer **Connecter** dans la barre du haut et sélectionner le port COM |
-| 5 | Choisir la **version** (dropdown), le **mode** (V1 / V1NTC / DENDRO) et les **options radio** (GSM / LoRa / GSM+LoRa) |
+| 5 | Choisir la **version** (dropdown), le **mode** (V1 / V1NTC / DENDRO) et les **options radio** (GSM / LoRa / GSM+LoRa). Depuis la v3.10, l'option **Mise à jour OTA via GSM** (activée par défaut) choisit entre le build standard et sa variante `-noota` |
 | 6 | Cliquer **Mise à jour** (NVS préservée) ou **Flash usine** (efface tout) |
 | 7 | Confirmer l'erase (si Flash usine), confirmer le port → flash lance |
 | 8 | À la fin, le terminal série reprend automatiquement le log du device |
@@ -90,9 +90,9 @@ Décrit la matrice **serveurs × trames × radios × versions** et où trouver c
     { "id": "dendro", "label": "DENDRO", "description": "V1 + 4 entrées analogiques (dendromètres)" }
   ],
   "radios": [
-    { "id": "gsm",      "label": "GSM",      "tooltip": "Modem cellulaire seul (SIM7080G)" },
-    { "id": "lora",     "label": "LoRa",     "tooltip": "Radio LoRaWAN SX1262 seule (EU868)" },
-    { "id": "lora-gsm", "label": "LoRa+GSM", "tooltip": "Radio LoRaWAN + modem cellulaire (EU868)" }
+    { "id": "gsm",      "label": "GSM",      "tooltip": "Modem cellulaire seul (SIM7000 / SIM7070 / A7670)" },
+    { "id": "lora",     "label": "LoRa",     "tooltip": "Radio LoRaWAN SX1262 seule (EU868 / US915 / AU915)" },
+    { "id": "lora-gsm", "label": "LoRa+GSM", "tooltip": "Radio LoRaWAN + modem cellulaire" }
   ],
   "versions": [
     {
@@ -117,9 +117,10 @@ Décrit la matrice **serveurs × trames × radios × versions** et où trouver c
 **Règles** :
 - `servers[]` : dimension la plus critique. Conditionne où le device envoie ses données. **Aucun défaut** côté UI : l'utilisateur DOIT cliquer activement sur un serveur (overlay flou bloquant tant qu'aucun choix n'est fait).
 - `versions[]` est trié côté JS par semver descendant (3.10.0 > 3.9.0 > 3.8.0 > 3.8.0-rc1)
-- La clé de chaque build est `<serverId>-<trameId>-<radioId>` (ex: `inrae-v1ntc-lora-gsm`)
+- La clé de chaque build est `<serverId>-<trameId>-<radioId>[-noota]` (ex: `inrae-v1ntc-lora-gsm`, `test-dendro-gsm-noota`)
+- Suffixe `-noota` (depuis la v3.10, radios GSM uniquement) : même firmware compilé **sans** la mise à jour OTA via GSM (`OTA_GSM_ACTIVE` désactivé). L'UI affiche l'option « Mise à jour OTA via GSM » dès qu'une clé `-noota` existe pour la combo courante ; décochée, elle sélectionne la variante `-noota`
 - Si `available: false`, l'UI affiche la combo comme indisponible et désactive les boutons
-- 2 serveurs × 3 trames × 3 radios = **18 builds par version**
+- 2 serveurs × 3 trames × 3 radios = **18 builds par version**, plus 12 variantes `-noota` = **30 builds** à partir de la v3.10
 
 ### `manifests/v<X.Y.Z>-<server>-<trame>-<radio>-<mode>.json` — manifest ESP Web Tools
 
@@ -182,7 +183,7 @@ esptool.py --chip esp32s3 merge_bin \
 
 ### `firmware/v<X.Y.Z>-<server>-<trame>-<radio>-app.bin` — application seule
 
-Copie directe du `firmware.bin` produit par PlatformIO (~600 KB). **Pas utilisé** par les manifests actuels (qui pointent tous vers `-full.bin` à offset 0), mais conservé pour usage futur (OTA, mise à jour via downlink LoRaWAN, etc.).
+Copie directe du `firmware.bin` produit par PlatformIO (~600 KB). **Pas utilisé** par les manifests (qui pointent tous vers `-full.bin` à offset 0) : c'est le fichier à téléverser comme paquet OTA (ThingsBoard → OTA updates, checksum MD5) ou à servir à `AT+OTA=` pour la **mise à jour à distance via GSM** (firmware ≥ 3.10, voir `Docs/OTA_GSM.md` du dépôt firmware).
 
 ### `.flasher-version` — compteur UI
 
@@ -224,8 +225,8 @@ cd /path/to/lora_lte_node/Code/lora_lte_node
 ### Que fait le script (résumé)
 
 1. **Backup** de `Conf.h`
-2. Pour chaque combo (3 trames × 3 radios = 9) :
-   - **Patche** `Conf.h` (TRAME, GSM_ACTIVE, LORA_ACTIVE)
+2. Pour chaque combo (2 serveurs × 3 trames × 3 radios, + variantes `-noota` des radios GSM = 30 ; `-SkipNoOta` / `--skip-noota` pour 18) :
+   - **Patche** `Conf.h` (TRAME, GSM_ACTIVE, LORA_ACTIVE, SERV_INRAE, OTA_GSM_ACTIVE)
    - `pio run` → produit `bootloader.bin`, `partitions.bin`, `firmware.bin`
    - `esptool merge_bin` → produit `vX.Y.Z-trame-radio-full.bin` (DIO, 80MHz, 8MB)
    - Copie `firmware.bin` → `vX.Y.Z-trame-radio-app.bin`
@@ -235,7 +236,7 @@ cd /path/to/lora_lte_node/Code/lora_lte_node
 5. **Prompt** publish (o/N)
 6. Si oui : incrémente `.flasher-version`, injecte tag dans `index.html`, `git add/commit/push`
 
-Durée : ~10-15 min (9 compilations × ~1 min).
+Durée : ~10 s par build quand le cache PlatformIO est chaud, ~1 min à froid.
 
 ### Génération manuelle (à éviter mais possible)
 

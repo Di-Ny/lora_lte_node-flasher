@@ -32,17 +32,17 @@
     {
       "id": "gsm",
       "label": "GSM",
-      "tooltip": "Modem cellulaire seul (SIM7080G)"
+      "tooltip": "Modem cellulaire seul (SIM7000 / SIM7070 / A7670)"
     },
     {
       "id": "lora",
       "label": "LoRa",
-      "tooltip": "Radio LoRaWAN SX1262 seule (EU868)"
+      "tooltip": "Radio LoRaWAN SX1262 seule (EU868 / US915 / AU915)"
     },
     {
       "id": "lora-gsm",
       "label": "LoRa+GSM",
-      "tooltip": "Radio LoRaWAN + modem cellulaire (EU868)"
+      "tooltip": "Radio LoRaWAN + modem cellulaire"
     }
   ],
   "versions": [
