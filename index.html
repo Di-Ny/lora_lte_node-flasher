@@ -838,9 +838,18 @@
         }
       }
     }
+    // ---- Flash : liberation puis reprise du port ---------------------------------------------
+    // Sequence d'ESP Web Tools v10 quand on clique sur un bouton d'installation :
+    //   1. navigator.serial.requestPort()  -> fenetre du navigateur : l'utilisateur choisit le port (« Connexion »)
+    //   2. port.open()                     -> alerte « Failed to open serial port » si le port est deja ouvert
+    //   3. <ewt-install-dialog> ajoute a <body> (bouton « Installer », progression, « Installation terminee »)
+    //   4. a la fermeture du dialogue, l'outil ferme le port.
+    // Le navigateur rend LE MEME objet SerialPort a la page et a l'outil : nous devons donc fermer le notre
+    // avant l'etape 2 et ne le reprendre qu'apres l'etape 4. L'ancienne version re-tentait open() toutes les
+    // 1,5 s des la liberation : pendant que l'utilisateur choisissait le port (etape 1), la page re-saisissait
+    // le port, le terminal repartait et l'outil echouait a l'etape 2 (« port deja ouvert ») -> decalage entre
+    // le terminal et la consigne. On observe maintenant l'apparition / disparition du dialogue dans le DOM.
     async function releasePortForFlash() {
-      // Ferme silencieusement le port pour qu'ESP Web Tools puisse l'ouvrir.
-      // Le port reste référencé dans port.device pour qu'on puisse le reprendre apres.
       port.flashing = true;
       port.reading = false;
       if (port.reader) {
@@ -852,56 +861,94 @@
         try { await port.device.close(); } catch {}
       }
       updatePortUI();
-      // Lance un polling pour detecter quand ESP Web Tools libere le port.
-      // On essaie d'ouvrir toutes les 1.5s ; le 1er succes = flash termine, on reprend.
-      startReclaimPolling();
+      terminal.write("\n[flash] Port libéré pour l'outil. Dans la fenêtre du navigateur : choisir le port puis « Connexion », "
+                   + "ensuite « Installer ». Le log reprendra ici à la fermeture de la fenêtre.\n");
+      startFlashWatch();
     }
 
-    let reclaimPollingId = null;
-    function startReclaimPolling() {
-      if (reclaimPollingId) return;
-      reclaimPollingId = setInterval(async () => {
-        if (!port.flashing || !port.device) {
-          clearInterval(reclaimPollingId);
-          reclaimPollingId = null;
-          return;
-        }
-        // Tente d'ouvrir : si ca marche, ESP Web Tools a libere -> on reprend
-        try {
-          await port.device.open({ baudRate: 115200 });
-          // Succes : on a le port, on annule le polling et on reprend la lecture
-          clearInterval(reclaimPollingId);
-          reclaimPollingId = null;
-          port.flashing = false;
-          port.reading = true;
-          readLoop();
-          updatePortUI();
-        } catch (e) {
-          // Toujours occupe par ESP Web Tools, on retentera
-        }
-      }, 1500);
-    }
-    async function reclaimPortAfterFlash() {
-      if (reclaimPollingId) {
-        clearInterval(reclaimPollingId);
-        reclaimPollingId = null;
-      }
-      port.flashing = false;
-      if (port.device) {
-        port.reading = true;
-        await new Promise(r => setTimeout(r, 500));
-        try {
-          await port.device.open({ baudRate: 115200 });
-          readLoop();
-        } catch (e) {
-          // Le port est peut-etre deja ouvert si le polling l'a deja repris
-          if (!/already open/i.test(e.message)) {
-            port.device = null;
-          } else {
-            readLoop();
+    let flashWatch = null;
+    function startFlashWatch() {
+      stopFlashWatch();
+      const w = { dialogSeen: false, observer: null, fallbackTimer: null, graceTimer: null };
+      w.observer = new MutationObserver((mutations) => {
+        for (const m of mutations) {
+          for (const n of m.addedNodes) {
+            if (n.nodeType === 1 && n.tagName === "EWT-INSTALL-DIALOG") {
+              w.dialogSeen = true;
+              clearTimeout(w.fallbackTimer);
+              clearTimeout(w.graceTimer);
+              terminal.write("[flash] Outil connecté au port, installation en cours…\n");
+            }
+          }
+          for (const n of m.removedNodes) {
+            if (n.nodeType !== 1) continue;
+            if (n.tagName === "EWT-INSTALL-DIALOG") {
+              // L'outil ferme le port juste apres : on reprend, puis on reset le node pour voir son demarrage
+              terminal.write("[flash] Fenêtre de l'outil fermée, reprise du port…\n");
+              setTimeout(() => reclaimPortAfterFlash({ resetNode: true }), 400);
+            } else if (n.tagName === "EWT-NO-PORT-PICKED-DIALOG" && !w.dialogSeen) {
+              // Choix de port annule : si aucune installation ne demarre dans les 5 s, on reprend le log
+              clearTimeout(w.graceTimer);
+              w.graceTimer = setTimeout(() => { if (!w.dialogSeen) reclaimPortAfterFlash({ resetNode: false }); }, 5000);
+            }
           }
         }
+      });
+      w.observer.observe(document.body, { childList: true });
+      // Securite : fenetre de choix du port fermee sans suite, ou echec d'ouverture -> on reprend le log
+      w.fallbackTimer = setTimeout(() => {
+        if (!w.dialogSeen) {
+          terminal.write("[flash] Aucune installation lancée, reprise du log.\n");
+          reclaimPortAfterFlash({ resetNode: false });
+        }
+      }, 90000);
+      flashWatch = w;
+    }
+    function stopFlashWatch() {
+      if (!flashWatch) return;
+      flashWatch.observer.disconnect();
+      clearTimeout(flashWatch.fallbackTimer);
+      clearTimeout(flashWatch.graceTimer);
+      flashWatch = null;
+    }
+
+    async function reclaimPortAfterFlash(opts = {}) {
+      stopFlashWatch();
+      if (!port.device) { port.flashing = false; updatePortUI(); return; }
+      if (port.reading) { port.flashing = false; updatePortUI(); return; }   // deja repris
+      let opened = false;
+      for (let i = 0; i < 20 && !opened; i++) {
+        try {
+          await port.device.open({ baudRate: 115200 });
+          opened = true;
+        } catch (e) {
+          // « already open » = encore tenu par l'outil (meme objet SerialPort) : on retente 10 s
+          await new Promise(r => setTimeout(r, 500));
+        }
       }
+      if (!opened) {
+        terminal.write("\n[flash] Le port est encore utilisé par l'outil : fermez sa fenêtre puis cliquez « Reprendre log ».\n");
+        port.flashing = true;
+        updatePortUI();
+        return;
+      }
+      port.flashing = false;
+      if (opts.resetNode) {
+        try {
+          // Reset du node via EN (RTS), IO0 (DTR) relache : meme sequence qu'esptool, le demarrage du
+          // nouveau firmware s'affiche dans le terminal (banniere « Ver: », menu de configuration).
+          await port.device.setSignals({ dataTerminalReady: false, requestToSend: true });
+          await new Promise(r => setTimeout(r, 100));
+          await port.device.setSignals({ requestToSend: false });
+          terminal.write("\n[flash] Port repris, reset du node : démarrage du nouveau firmware ci-dessous.\n");
+        } catch (e) {
+          terminal.write(`\n[flash] Port repris (reset du node impossible : ${e.message}).\n`);
+        }
+      } else {
+        terminal.write("\n[flash] Port repris, log en direct.\n");
+      }
+      port.reading = true;
+      readLoop();
       updatePortUI();
     }
 
@@ -935,7 +982,7 @@
       if (port.device) disconnectPort(); else connectPort();
     });
     document.getElementById("btn-reclaim").addEventListener("click", () => {
-      if (port.device && port.flashing) reclaimPortAfterFlash();
+      if (port.device && port.flashing) reclaimPortAfterFlash({ resetNode: false });
     });
 
     // =========================
@@ -1185,7 +1232,7 @@
 
       if (build.available) {
         summary.className = "build-summary ok";
-        summary.innerHTML = `<span>✓ Configuration : <strong>${radioLabel()}</strong> · </span><span class="build-id">${id}</span><span class="summary-end" style="color: var(--muted); font-weight: 400;">2 clics : « Install » puis « Se connecter »</span>`;
+        summary.innerHTML = `<span>✓ Configuration : <strong>${radioLabel()}</strong> · </span><span class="build-id">${id}</span><span class="summary-end" style="color: var(--muted); font-weight: 400;">Ensuite : choisir le port dans la fenêtre du navigateur (« Connexion »), cliquer « Installer », puis fermer la fenêtre : le log du node reprend ici</span>`;
 
         // Update button
         const upBtn = document.createElement("button");
@@ -1300,19 +1347,8 @@
       const slotBtn = wrapper.querySelector("[slot='activate']");
       if (slotBtn) slotBtn.addEventListener("click", releaseHandler, true);
 
-      // Reprise du port apres flash via les events ESP Web Tools (compatibilite v10)
-      const reclaimStates = new Set([
-        "FINISHED", "finished", "ERROR", "error", "ABORTED", "aborted"
-      ]);
-      const onStateChange = (ev) => {
-        const s = ev.detail?.state || ev.detail?.installState || ev.detail;
-        const sStr = typeof s === "string" ? s : s?.state;
-        if (sStr && reclaimStates.has(sStr) && port.device && port.flashing) {
-          reclaimPortAfterFlash();
-        }
-      };
-      wrapper.addEventListener("state-changed", onStateChange);
-      wrapper.addEventListener("installation-state-changed", onStateChange);
+      // La reprise du port apres le flash est pilotee par l'observation du dialogue <ewt-install-dialog>
+      // (startFlashWatch) : ESP Web Tools v10 n'emet pas d'evenement d'etat sur ce bouton.
     }
 
     function renderServerCards() {
