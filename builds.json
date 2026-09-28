@@ -47,6 +47,103 @@
   ],
   "versions": [
     {
+      "id": "3.9.0",
+      "date": "2026-09-28",
+      "notes": "Version stable en production : fixes join LoRaWAN (DevNonce persistes, scanGuard 100 ms, clamp DR), fallback RTC interne ESP32, heure via header HTTP Date",
+      "builds": {
+        "inrae-v1-gsm": {
+          "available": true,
+          "manifestUpdate": "manifests/v3.9.0-inrae-v1-gsm-update.json",
+          "manifestFactory": "manifests/v3.9.0-inrae-v1-gsm-factory.json"
+        },
+        "test-v1-gsm": {
+          "available": true,
+          "manifestUpdate": "manifests/v3.9.0-test-v1-gsm-update.json",
+          "manifestFactory": "manifests/v3.9.0-test-v1-gsm-factory.json"
+        },
+        "inrae-v1-lora": {
+          "available": true,
+          "manifestUpdate": "manifests/v3.9.0-inrae-v1-lora-update.json",
+          "manifestFactory": "manifests/v3.9.0-inrae-v1-lora-factory.json"
+        },
+        "test-v1-lora": {
+          "available": true,
+          "manifestUpdate": "manifests/v3.9.0-test-v1-lora-update.json",
+          "manifestFactory": "manifests/v3.9.0-test-v1-lora-factory.json"
+        },
+        "inrae-v1-lora-gsm": {
+          "available": true,
+          "manifestUpdate": "manifests/v3.9.0-inrae-v1-lora-gsm-update.json",
+          "manifestFactory": "manifests/v3.9.0-inrae-v1-lora-gsm-factory.json"
+        },
+        "test-v1-lora-gsm": {
+          "available": true,
+          "manifestUpdate": "manifests/v3.9.0-test-v1-lora-gsm-update.json",
+          "manifestFactory": "manifests/v3.9.0-test-v1-lora-gsm-factory.json"
+        },
+        "inrae-v1ntc-gsm": {
+          "available": true,
+          "manifestUpdate": "manifests/v3.9.0-inrae-v1ntc-gsm-update.json",
+          "manifestFactory": "manifests/v3.9.0-inrae-v1ntc-gsm-factory.json"
+        },
+        "test-v1ntc-gsm": {
+          "available": true,
+          "manifestUpdate": "manifests/v3.9.0-test-v1ntc-gsm-update.json",
+          "manifestFactory": "manifests/v3.9.0-test-v1ntc-gsm-factory.json"
+        },
+        "inrae-v1ntc-lora": {
+          "available": true,
+          "manifestUpdate": "manifests/v3.9.0-inrae-v1ntc-lora-update.json",
+          "manifestFactory": "manifests/v3.9.0-inrae-v1ntc-lora-factory.json"
+        },
+        "test-v1ntc-lora": {
+          "available": true,
+          "manifestUpdate": "manifests/v3.9.0-test-v1ntc-lora-update.json",
+          "manifestFactory": "manifests/v3.9.0-test-v1ntc-lora-factory.json"
+        },
+        "inrae-v1ntc-lora-gsm": {
+          "available": true,
+          "manifestUpdate": "manifests/v3.9.0-inrae-v1ntc-lora-gsm-update.json",
+          "manifestFactory": "manifests/v3.9.0-inrae-v1ntc-lora-gsm-factory.json"
+        },
+        "test-v1ntc-lora-gsm": {
+          "available": true,
+          "manifestUpdate": "manifests/v3.9.0-test-v1ntc-lora-gsm-update.json",
+          "manifestFactory": "manifests/v3.9.0-test-v1ntc-lora-gsm-factory.json"
+        },
+        "inrae-dendro-gsm": {
+          "available": true,
+          "manifestUpdate": "manifests/v3.9.0-inrae-dendro-gsm-update.json",
+          "manifestFactory": "manifests/v3.9.0-inrae-dendro-gsm-factory.json"
+        },
+        "test-dendro-gsm": {
+          "available": true,
+          "manifestUpdate": "manifests/v3.9.0-test-dendro-gsm-update.json",
+          "manifestFactory": "manifests/v3.9.0-test-dendro-gsm-factory.json"
+        },
+        "inrae-dendro-lora": {
+          "available": true,
+          "manifestUpdate": "manifests/v3.9.0-inrae-dendro-lora-update.json",
+          "manifestFactory": "manifests/v3.9.0-inrae-dendro-lora-factory.json"
+        },
+        "test-dendro-lora": {
+          "available": true,
+          "manifestUpdate": "manifests/v3.9.0-test-dendro-lora-update.json",
+          "manifestFactory": "manifests/v3.9.0-test-dendro-lora-factory.json"
+        },
+        "inrae-dendro-lora-gsm": {
+          "available": true,
+          "manifestUpdate": "manifests/v3.9.0-inrae-dendro-lora-gsm-update.json",
+          "manifestFactory": "manifests/v3.9.0-inrae-dendro-lora-gsm-factory.json"
+        },
+        "test-dendro-lora-gsm": {
+          "available": true,
+          "manifestUpdate": "manifests/v3.9.0-test-dendro-lora-gsm-update.json",
+          "manifestFactory": "manifests/v3.9.0-test-dendro-lora-gsm-factory.json"
+        }
+      }
+    },
+    {
       "id": "3.8.0",
       "date": "2026-05-16",
       "notes": "Première release avec choix serveur INRAE/Test",
