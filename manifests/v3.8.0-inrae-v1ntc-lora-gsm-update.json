@@ -1,12 +1,23 @@
 {
   "name": "LoRa-LTE Node v3.8.0 V1NTC LoRa+GSM - Mise a jour",
   "version": "3.8.0",
-  "new_install_prompt_erase": false,
+  "new_install_prompt_erase": true,
   "builds": [
     {
       "chipFamily": "ESP32-S3",
       "parts": [
-        { "path": "../firmware/v3.8.0-inrae-v1ntc-lora-gsm-full.bin", "offset": 0 }
+        {
+          "path": "../firmware/v3.8.0-boot.bin",
+          "offset": 0
+        },
+        {
+          "path": "../firmware/boot_app0.bin",
+          "offset": 57344
+        },
+        {
+          "path": "../firmware/v3.8.0-inrae-v1ntc-lora-gsm-app.bin",
+          "offset": 65536
+        }
       ]
     }
   ]

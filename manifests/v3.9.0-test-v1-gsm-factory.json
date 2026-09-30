@@ -1,7 +1,7 @@
 {
   "name": "LoRa-LTE Node v3.9.0 V1 GSM - Flash usine",
   "version": "3.9.0",
-  "new_install_prompt_erase": true,
+  "new_install_prompt_erase": false,
   "builds": [
     {
       "chipFamily": "ESP32-S3",

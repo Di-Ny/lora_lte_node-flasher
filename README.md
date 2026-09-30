@@ -18,8 +18,8 @@ Aucune installation requise — tout s'exécute dans le navigateur via [ESP Web 
 | 4 | Cliquer **Connecter** dans la barre du haut et sélectionner le port COM |
 | 5 | Choisir la **version** (dropdown), le **mode** (V1 / V1NTC / DENDRO) et les **options radio** (GSM / LoRa / GSM+LoRa). Depuis la v3.10, l'option **Mise à jour OTA via GSM** (activée par défaut) choisit entre le build standard et sa variante `-noota` |
 | 6 | Cliquer **Mise à jour** (NVS préservée) ou **Flash usine** (efface tout) |
-| 7 | Confirmer l'erase (si Flash usine), confirmer le port → flash lance |
-| 8 | À la fin, le terminal série reprend automatiquement le log du device |
+| 7 | Choisir le port dans la fenêtre du navigateur (« Connexion »), puis dans la fenêtre ESP Web Tools : « Install… », « Install » (confirmation), attendre « Installation complete! », « Next », fermer. En mode Mise à jour la page répond elle-même « non » à la question « Erase device » de l'outil ; si elle reste affichée, laisser la case vide et cliquer « Next » |
+| 8 | À la fin, la page reprend le port, reset le node et le terminal série affiche son démarrage (`Ver:`, `Build:`) |
 
 **Pourquoi le choix de serveur est critique** : chaque option correspond à une URL de serveur HTTP différente, compilée en dur dans le firmware. Un mauvais choix au moment du flash envoie les données du device chez le mauvais destinataire — d'où le verrouillage de la page tant que le choix n'est pas fait explicitement.
 
@@ -132,7 +132,7 @@ Le `server` (INRAE / Test) reflète si `SERV_INRAE` est défini ou non dans `Con
 {
   "name": "LoRa-LTE Node v3.8.0 V1NTC GSM - Flash usine",
   "version": "3.8.0",
-  "new_install_prompt_erase": true,
+  "new_install_prompt_erase": false,
   "builds": [
     {
       "chipFamily": "ESP32-S3",
@@ -148,11 +148,47 @@ Le `server` (INRAE / Test) reflète si `SERV_INRAE` est défini ou non dans `Con
 | Champ | Update | Factory |
 |-------|--------|---------|
 | `name` | "...- Mise à jour" | "...- Flash usine" |
-| `new_install_prompt_erase` | `false` | `true` |
-| `parts[].path` | identique (`*-full.bin`) | identique |
-| `parts[].offset` | `0` | `0` |
+| `new_install_prompt_erase` | `true` | `false` |
+| `parts[]` | 3 parties : `v<X.Y.Z>-boot.bin` @ `0` (bootloader + table de partitions, 0x9000 octets), `boot_app0.bin` @ `57344` (0xE000), `v<X.Y.Z>-<combo>-app.bin` @ `65536` (0x10000) — **la zone NVS 0x9000-0xE000 n'est pas écrite** | 1 partie : `v<X.Y.Z>-<combo>-full.bin` @ `0` |
 
-Avec `new_install_prompt_erase: true`, ESP Web Tools appelle `esploader.eraseFlash()` (chip erase complet 8 MB) **avant** d'écrire le binaire. Avec `false`, seuls les secteurs où on écrit sont effacés — la NVS (`0x9000`-`0xE000`) survit donc les clés LoRaWAN sont préservées.
+Exemple de manifest « Mise à jour » :
+
+```json
+{
+  "name": "LoRa-LTE Node v3.10.0 V1 GSM - Mise a jour",
+  "version": "3.10.0",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "../firmware/v3.10.0-boot.bin", "offset": 0 },
+        { "path": "../firmware/boot_app0.bin", "offset": 57344 },
+        { "path": "../firmware/v3.10.0-test-v1-gsm-app.bin", "offset": 65536 }
+      ]
+    }
+  ]
+}
+```
+
+⚠️ Pourquoi pas la `-full.bin` pour la mise à jour : `esptool merge_bin` remplit les trous de `0xFF`, donc la full.bin
+**recouvre la NVS** (`0x9000`-`0xE000`) ; ESP Web Tools efface puis écrit chaque partie en entier, la NVS était donc effacée
+à chaque « Mise à jour » même sans chip erase (constaté au banc le 2026-09-28 : `NVS Init - Records: 0/50`, ICCID perdu).
+
+⚠️ Le sens de ce champ est contre-intuitif pour un device **sans Improv Serial** (notre firmware), vérifié au banc le
+2026-09-28 sur ESP Web Tools 10.4 :
+
+- `new_install_prompt_erase: false` → l'outil appelle `_startInstall(true)` : **chip erase complet (8 Mo) sans poser de
+  question**, puis écriture du binaire. C'est le comportement voulu pour **Flash usine**.
+- `new_install_prompt_erase: true` → l'outil affiche la question « Erase device » avec une case **décochée par défaut** ;
+  case vide → seuls les secteurs écrits sont effacés, la NVS (`0x9000`-`0xE000`) survit (clés LoRaWAN, ICCID, serveur/APN,
+  mesures en attente). C'est le mode **Mise à jour** ; `index.html` répond lui-même « non » à la question
+  (`watchEraseQuestion`), l'utilisateur ne voit donc normalement que la confirmation d'installation.
+
+Jusqu'au Flasher #13 les drapeaux étaient inversés ET la mise à jour écrivait la full.bin : « Mise à jour » effaçait toute
+la flash (NVS comprise). Les manifests des versions déjà publiées (v3.8.0, v3.9.0) ont été corrigés en même temps que le
+script de release (`v3.8.0-boot.bin` / `v3.9.0-boot.bin` extraits des full.bin existantes : les 0x9000 premiers octets sont
+identiques pour toutes les combos d'une version, et même entre versions tant que le framework ne change pas).
 
 ### `firmware/v<X.Y.Z>-<server>-<trame>-<radio>-full.bin` — image complète
 
@@ -183,7 +219,15 @@ esptool.py --chip esp32s3 merge_bin \
 
 ### `firmware/v<X.Y.Z>-<server>-<trame>-<radio>-app.bin` — application seule
 
-Copie directe du `firmware.bin` produit par PlatformIO (~600 KB). **Pas utilisé** par les manifests (qui pointent tous vers `-full.bin` à offset 0) : c'est le fichier à téléverser comme paquet OTA (ThingsBoard → OTA updates, checksum MD5) ou à servir à `AT+OTA=` pour la **mise à jour à distance via GSM** (firmware ≥ 3.10, voir `Docs/OTA_GSM.md` du dépôt firmware).
+Copie directe du `firmware.bin` produit par PlatformIO (~600 KB). Utilisé par le manifest **Mise à jour** (écrit à `0x10000`, NVS intacte) et c'est aussi le fichier à téléverser comme paquet OTA (ThingsBoard → OTA updates, checksum MD5) ou à servir à `AT+OTA=` pour la **mise à jour à distance via GSM** (firmware ≥ 3.10, voir `Docs/OTA_GSM.md` du dépôt firmware).
+
+### `firmware/v<X.Y.Z>-boot.bin` et `firmware/boot_app0.bin` — parties fixes du manifest « Mise à jour »
+
+- `v<X.Y.Z>-boot.bin` (36 864 octets) : les `0x9000` premiers octets de la full.bin = bootloader (`0x0`) + table de partitions
+  (`0x8000`), une seule par version (identique pour toutes les combos). Écrite à l'offset `0`.
+- `boot_app0.bin` (8 192 octets) : `otadata` pointant sur `app0`, fichier du framework Arduino-ESP32, commun à toutes les
+  versions. Écrit à `0xE000`. Après une mise à jour USB le node redémarre donc toujours sur `app0`, où l'application vient
+  d'être écrite (`0x10000`), quelle que soit la partition qu'une OTA GSM précédente avait activée.
 
 ### `.flasher-version` — compteur UI
 

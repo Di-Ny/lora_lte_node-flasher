@@ -158,8 +158,9 @@ async function precacheFirmwares(client) {
     const data = await resp.json();
 
     // Enumere tous les fichiers a cacher : .bin + manifests
-    const urls = [];
+    const urls = ["firmware/boot_app0.bin"];   // otadata commun a toutes les versions (manifests "Mise a jour")
     for (const v of data.versions || []) {
+      urls.push(`firmware/v${v.id}-boot.bin`);   // bootloader + table de partitions de la version (manifest "Mise a jour")
       for (const key of Object.keys(v.builds || {})) {
         const b = v.builds[key];
         if (!b.available) continue;

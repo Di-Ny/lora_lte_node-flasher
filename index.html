@@ -1232,7 +1232,7 @@
 
       if (build.available) {
         summary.className = "build-summary ok";
-        summary.innerHTML = `<span>✓ Configuration : <strong>${radioLabel()}</strong> · </span><span class="build-id">${id}</span><span class="summary-end" style="color: var(--muted); font-weight: 400;">Ensuite : choisir le port dans la fenêtre du navigateur (« Connexion »), cliquer « Installer », puis fermer la fenêtre : le log du node reprend ici</span>`;
+        summary.innerHTML = `<span>✓ Configuration : <strong>${radioLabel()}</strong> · </span><span class="build-id">${id}</span><span class="summary-end" style="color: var(--muted); font-weight: 400;">Ensuite : choisir le port dans la fenêtre du navigateur (« Connexion »), cliquer « Install… » puis confirmer, attendre « Installation complete », fermer la fenêtre : le log du node reprend ici. Si l'outil pose la question « Erase device », laisser la case vide pour une mise à jour.</span>`;
 
         // Update button
         const upBtn = document.createElement("button");
@@ -1329,6 +1329,42 @@
       }
     }
 
+    // ---- Effacement ou non : reponse automatique a la question « Erase device » d'ESP Web Tools ----------
+    // ESP Web Tools v10, device sans Improv (notre firmware) :
+    //   - manifest new_install_prompt_erase=false  -> _startInstall(true)  : effacement COMPLET de la flash, sans
+    //     question (c'est l'inverse de ce que le nom du champ suggere) -> utilise par « Flash usine » ;
+    //   - manifest new_install_prompt_erase=true   -> etat ASK_ERASE : question « Erase device », case decochee
+    //     par defaut -> utilise par « Mise a jour » ; on repond « non » a la place de l'utilisateur pour que la
+    //     NVS (cles LoRaWAN, ICCID, serveur/APN, mesures en attente) soit conservee.
+    // Verifie au banc le 2026-09-28 (l'ancien reglage inverse effacait la NVS a chaque « Mise a jour »).
+    // Si l'API interne de l'outil change, la question reste simplement affichee : laisser la case vide.
+    let eraseWatch = null;
+    function watchEraseQuestion(mode) {
+      if (eraseWatch) { eraseWatch.observer.disconnect(); clearTimeout(eraseWatch.timer); clearInterval(eraseWatch.poll); }
+      const ew = { observer: null, timer: null, poll: null };
+      const hook = (dlg) => {
+        ew.observer.disconnect(); clearTimeout(ew.timer);
+        let tries = 0;
+        ew.poll = setInterval(() => {
+          if (!document.body.contains(dlg) || ++tries > 600) { clearInterval(ew.poll); return; }   // 5 min max
+          if (dlg._state === "ASK_ERASE" && typeof dlg._startInstall === "function") {
+            const erase = (mode === "factory");
+            dlg._startInstall(erase);
+            terminal.write(`[flash] Question « Erase device » de l'outil : réponse automatique « ${erase ? "oui (flash usine)" : "non (mise à jour, NVS conservée)"} ».\n`);
+            clearInterval(ew.poll);
+          }
+        }, 300);
+      };
+      ew.observer = new MutationObserver((mutations) => {
+        for (const m of mutations) for (const n of m.addedNodes) {
+          if (n.nodeType === 1 && n.tagName === "EWT-INSTALL-DIALOG") { hook(n); return; }
+        }
+      });
+      ew.observer.observe(document.body, { childList: true });
+      ew.timer = setTimeout(() => ew.observer.disconnect(), 90000);   // choix du port annule : on arrete d'attendre
+      eraseWatch = ew;
+    }
+
     function attachFlashListeners(wrapper, mode) {
       // Intercepte le clic en phase capture pour liberer le port avant qu'ESP Web
       // Tools n'ouvre le sien. On attache sur 2 cibles pour etre certains de capter :
@@ -1337,6 +1373,7 @@
       // Selon les versions d'ESP Web Tools, l'evenement peut ne pas bubbler jusqu'au
       // wrapper (shadow DOM, etc.), donc la double-attache est une securite.
       const releaseHandler = (ev) => {
+        watchEraseQuestion(mode);   // toujours (terminal connecte ou non) : repond a la question « Erase device »
         if (port.device && !port.flashing) {
           console.log("[flash] click intercepted, releasing port (target=" + ev.currentTarget.tagName + ")");
           releasePortForFlash().catch(e => console.warn("[flash] release failed:", e));
